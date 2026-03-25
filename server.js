@@ -109,32 +109,15 @@ const verificarToken = (req, res, next) => {
 };
 
 // ═══════════════════════════════════════════════════════════════
-// 🌐 RUTAS PÚBLICAS
-// ═══════════════════════════════════════════════════════════════
-
-// Ruta de prueba
-app.get('/', (req, res) => {
-  res.json({
-    status: 'Servidor activo ✅',
-    timestamp: new Date(),
-    version: '2.0 - Con autenticación y dashboard'
-  });
-});
-
-// ═══════════════════════════════════════════════════════════════
 // 🎨 SERVIR DASHBOARD
 // ═══════════════════════════════════════════════════════════════
 
-// Servir archivos estáticos (dashboard.html, etc)
-app.use(express.static(__dirname));
+const dashboardHTML = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>LynxReview - Dashboard</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#f5f7fa;color:#333}.auth-container{display:flex;justify-content:center;align-items:center;min-height:100vh;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:20px}.auth-box{background:white;padding:40px;border-radius:10px;box-shadow:0 10px 25px rgba(0,0,0,.2);width:100%;max-width:400px}.auth-box h1{color:#667eea;margin-bottom:30px;text-align:center;font-size:28px}.form-group{margin-bottom:20px}.form-group label{display:block;margin-bottom:8px;font-weight:600;color:#555}.form-group input{width:100%;padding:12px;border:2px solid #ddd;border-radius:5px;font-size:14px}.form-group input:focus{outline:0;border-color:#667eea}.btn{width:100%;padding:12px;border:none;border-radius:5px;font-weight:600;cursor:pointer;font-size:16px;background:#667eea;color:#fff;transition:all .3s}.btn:hover{background:#5568d3}.success-message{background:#d4edda;border:1px solid #c3e6cb;color:#155724;padding:15px;border-radius:5px;margin-bottom:20px}.error-message{background:#f8d7da;border:1px solid #f5c6cb;color:#721c24;padding:15px;border-radius:5px;margin-bottom:20px}.text-center{text-align:center;margin-top:20px;font-size:14px}.link{color:#667eea;cursor:pointer;text-decoration:underline}</style></head><body><div class="auth-container"><div class="auth-box"><h1>🔍 LynxReview</h1><div id="message"></div><div id="loginForm"><h2 style="color:#667eea;font-size:20px;margin-bottom:20px">Login</h2><div class="form-group"><label>Email</label><input type="email" id="loginEmail" placeholder="tu@email.com"></div><div class="form-group"><label>Contraseña</label><input type="password" id="loginPassword" placeholder="•••••••"></div><button class="btn" onclick="handleLogin()">Inicia Sesión</button><div class="text-center">¿No tienes cuenta? <span class="link" onclick="showSignup()">Regístrate</span></div></div><div id="signupForm" style="display:none"><h2 style="color:#667eea;font-size:20px;margin-bottom:20px">Crear Cuenta</h2><div class="form-group"><label>Nombre</label><input type="text" id="signupName" placeholder="Tu nombre"></div><div class="form-group"><label>Email</label><input type="email" id="signupEmail" placeholder="tu@email.com"></div><div class="form-group"><label>Nombre del Negocio</label><input type="text" id="signupBusiness" placeholder="Mi Negocio"></div><div class="form-group"><label>Contraseña</label><input type="password" id="signupPassword" placeholder="•••••••"></div><button class="btn" onclick="handleSignup()">Registrarse</button><div class="text-center">¿Ya tienes cuenta? <span class="link" onclick="showLogin()">Inicia sesión</span></div></div></div></div><script>const API_URL='https://lynxreview-webhook.onrender.com';function showMessage(e,t='success'){const a=document.getElementById('message');a.innerHTML=\`<div class="\${t}-message">\${e}</div>\`,setTimeout(()=>{a.innerHTML=''},5e3)}function showLogin(){document.getElementById('loginForm').style.display='block',document.getElementById('signupForm').style.display='none',document.getElementById('message').innerHTML=''}function showSignup(){document.getElementById('loginForm').style.display='none',document.getElementById('signupForm').style.display='block',document.getElementById('message').innerHTML=''}async function handleLogin(){const e=document.getElementById('loginEmail').value,t=document.getElementById('loginPassword').value;e&&t?(showMessage('Conectando con el servidor...','success'),fetch(\`\${API_URL}/auth/login\`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:e,contrasena:t})}).then(e=>e.json()).then(e=>{e.token?(showMessage('✅ Login exitoso. Abriendo dashboard...','success'),setTimeout(()=>{showDashboard(e)},1500)):showMessage('❌ Error: '+(e.error||'No se pudo iniciar sesión'),'error')}).catch(e=>{showMessage('❌ Error de conexión: '+e.message,'error')})):showMessage('Por favor completa todos los campos','error')}async function handleSignup(){const e=document.getElementById('signupName').value,t=document.getElementById('signupEmail').value,a=document.getElementById('signupBusiness').value,n=document.getElementById('signupPassword').value;e&&t&&a&&n?(showMessage('Creando cuenta...','success'),fetch(\`\${API_URL}/auth/signup\`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nombre:e,email:t,nombreLocal:a,contrasena:n})}).then(e=>e.json()).then(e=>{e.token?(showMessage('✅ Cuenta creada. Abriendo dashboard...','success'),setTimeout(()=>{showDashboard(e)},1500)):showMessage('❌ Error: '+(e.error||'No se pudo crear la cuenta'),'error')}).catch(e=>{showMessage('❌ Error de conexión: '+e.message,'error')})):showMessage('Por favor completa todos los campos','error')}function showDashboard(e){document.body.innerHTML=\`<div style="padding:20px;font-family:Arial;background:#f5f7fa;min-height:100vh"><div style="max-width:800px;margin:0 auto;background:#fff;padding:30px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.1)"><h1 style="color:#667eea;margin-bottom:30px">✅ ¡Dashboard Conectado!</h1><div style="background:#d4edda;border:1px solid #c3e6cb;color:#155724;padding:15px;border-radius:5px;margin-bottom:20px"><strong>✅ Servidor Conectado Exitosamente</strong><br>Tu backend en Render está funcionando correctamente.</div><h2 style="color:#333;margin-top:30px">Información de tu Cuenta:</h2><div style="background:#f9f9f9;padding:15px;border-radius:5px;margin:15px 0"><p><strong>Nombre:</strong> \${e.cliente.nombre}</p><p><strong>Email:</strong> \${e.cliente.email}</p></div><button onclick="location.reload()" style="background:#667eea;color:#fff;border:none;padding:12px 20px;border-radius:5px;cursor:pointer;font-size:16px;margin-top:30px">Volver a Login</button></div></div>\`}</script></body></html>\`;
 
-// Ruta raíz - servir dashboard
+// Ruta raíz - servir dashboard HTML directamente
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/dashboard-standalone.html', (err) => {
-    if (err) {
-      res.json({ status: 'Servidor activo ✅', version: '2.0', timestamp: new Date() });
-    }
-  });
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(dashboardHTML);
 });
 
 // ═══════════════════════════════════════════════════════════════
