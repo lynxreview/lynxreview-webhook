@@ -1,24 +1,25 @@
 {
-  "name": "lynxreview-webhook",
-  "version": "2.0.0",
-  "description": "Webhook server para Stripe, MongoDB y gestion de resenas con IA",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "mongoose": "^7.5.0",
-    "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.0",
-    "dotenv": "^16.3.1",
-    "stripe": "^14.0.0"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.1"
-  },
-  "engines": {
-    "node": "18"
-  }
+    "name": "lynxreview-webhook",
+    "version": "2.0.0",
+    "description": "Webhook server para Stripe, MongoDB y gestión de reseñas con IA",
+    "main": "server.js",
+    "scripts": {
+          "start": "node server.js",
+          "dev": "nodemon server.js"
+    },
+    "dependencies": {
+          "express": "^4.18.2",
+          "mongoose": "^7.5.0",
+          "bcryptjs": "^2.4.3",
+          "jsonwebtoken": "^9.0.0",
+          "dotenv": "^16.3.1",
+          "stripe": "^14.0.0",
+          "openai": "^4.28.0"
+    },
+    "devDependencies": {
+          "nodemon": "^3.0.1"
+    },
+    "engines": {
+          "node": "18"
+    }
 }
