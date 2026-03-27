@@ -3,341 +3,618 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LynxReview - Dashboard de Reseñas</title>
+    <title>LynxReview - Dashboard</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: #333; }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f7fa;
-            color: #333;
-        }
-
+        /* AUTH */
         .auth-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            display: flex; justify-content: center; align-items: center;
             min-height: 100vh;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 20px;
         }
-
         .auth-box {
-            background: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            width: 100%;
-            max-width: 400px;
+            background: white; padding: 40px; border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 100%; max-width: 420px;
         }
-
-        .auth-box h1 {
-            color: #667eea;
-            margin-bottom: 30px;
-            text-align: center;
-            font-size: 28px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #555;
-        }
-
+        .auth-box h1 { color: #667eea; margin-bottom: 6px; text-align: center; font-size: 28px; }
+        .auth-box .subtitle { text-align: center; color: #888; font-size: 13px; margin-bottom: 28px; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #555; font-size: 13px; }
         .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
+            width: 100%; padding: 12px; border: 2px solid #eee;
+            border-radius: 8px; font-size: 14px; transition: border-color 0.2s;
+        }
+        .form-group input:focus { outline: none; border-color: #667eea; }
+        .btn-auth {
+            width: 100%; padding: 13px; border: none; border-radius: 8px;
+            font-weight: 700; cursor: pointer; font-size: 15px;
+            background: #667eea; color: white; transition: background 0.2s;
+        }
+        .btn-auth:hover { background: #5568d3; }
+        .auth-toggle { text-align: center; margin-top: 18px; font-size: 13px; color: #666; }
+        .auth-toggle span { color: #667eea; cursor: pointer; font-weight: 600; }
+        .auth-toggle span:hover { text-decoration: underline; }
+        .msg-success { background: #d1fae5; border: 1px solid #a7f3d0; color: #065f46; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; }
+        .msg-error { background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; }
+
+        /* DASHBOARD LAYOUT */
+        .dashboard { display: none; min-height: 100vh; }
+
+        /* TOPBAR */
+        .topbar {
+            background: white; border-bottom: 1px solid #e5e7eb; padding: 0 24px;
+            display: flex; align-items: center; justify-content: space-between;
+            height: 62px; position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .topbar-left { display: flex; align-items: center; gap: 12px; }
+        .topbar-logo { font-size: 20px; font-weight: 700; color: #667eea; }
+        .business-name { font-size: 14px; color: #555; background: #f3f4f6; padding: 4px 12px; border-radius: 20px; }
+        .topbar-right { display: flex; align-items: center; gap: 12px; }
+        .user-name { font-size: 13px; color: #666; }
+        .btn-logout { background: transparent; color: #888; border: 1px solid #d1d5db; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .btn-logout:hover { background: #f9fafb; color: #333; }
+
+        /* STATS */
+        .stats-section { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 24px; max-width: 1100px; margin: 0 auto; }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .stat-value { font-size: 30px; font-weight: 700; }
+        .stat-label { font-size: 12px; color: #888; margin-top: 4px; }
+        .stat-total .stat-value { color: #667eea; }
+        .stat-pending .stat-value { color: #f59e0b; }
+        .stat-approved .stat-value { color: #10b981; }
+        .stat-published .stat-value { color: #3b82f6; }
+
+        /* MAIN CONTENT */
+        .main { padding: 0 24px 40px; max-width: 1100px; margin: 0 auto; }
+
+        /* SETUP BANNER */
+        .setup-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border-radius: 12px; padding: 24px; margin-bottom: 24px;
+            display: flex; align-items: center; justify-content: space-between; gap: 20px;
+        }
+        .setup-banner h3 { font-size: 17px; margin-bottom: 6px; }
+        .setup-banner p { font-size: 13px; opacity: 0.85; line-height: 1.5; }
+        .place-id-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .place-id-form input {
+            padding: 10px 14px; border-radius: 8px; border: none;
+            font-size: 13px; width: 260px; outline: none;
+        }
+        .btn-save-place {
+            background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4);
+            padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px;
+            white-space: nowrap; transition: background 0.2s;
+        }
+        .btn-save-place:hover { background: rgba(255,255,255,0.3); }
+        .setup-done { background: #10b981; color: white; border-radius: 12px; padding: 16px 24px; margin-bottom: 24px; font-size: 14px; display: flex; align-items: center; gap: 10px; }
+
+        /* SECTION HEADER */
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .section-title { font-size: 17px; font-weight: 700; color: #1a1a2e; }
+        .btn-refresh {
+            background: #667eea; color: white; border: none; padding: 8px 16px;
+            border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600;
+        }
+        .btn-refresh:hover { background: #5568d3; }
+        .btn-refresh:disabled { background: #9ca3af; cursor: not-allowed; }
+
+        /* REVIEW CARDS */
+        .review-card {
+            background: white; border-radius: 12px; padding: 20px; margin-bottom: 14px;
+            border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .review-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+        .review-author { font-weight: 600; font-size: 15px; }
+        .review-date { font-size: 12px; color: #aaa; margin-top: 3px; }
+        .review-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+        .stars { color: #f59e0b; font-size: 18px; }
+        .estado-badge {
+            padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+            white-space: nowrap;
+        }
+        .estado-pendiente { background: #fef3c7; color: #92400e; }
+        .estado-aprobada { background: #d1fae5; color: #065f46; }
+        .estado-rechazada { background: #fee2e2; color: #991b1b; }
+        .estado-publicada { background: #dbeafe; color: #1e40af; }
+        .review-text {
+            background: #f9fafb; padding: 12px; border-radius: 8px;
+            font-size: 14px; line-height: 1.5; color: #444;
+            border-left: 3px solid #d1d5db; margin-bottom: 12px;
+        }
+        .response-section { }
+        .response-label {
+            font-size: 12px; font-weight: 600; color: #667eea; margin-bottom: 6px;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .response-text {
+            background: #eff6ff; padding: 12px; border-radius: 8px;
+            font-size: 14px; line-height: 1.5; color: #1e3a5f;
+            border-left: 3px solid #667eea;
+        }
+        .auto-badge {
+            font-size: 11px; background: #d1fae5; color: #065f46;
+            padding: 2px 8px; border-radius: 10px; margin-left: 6px;
         }
 
-        .form-group input:focus {
-            outline: none;
-            border-color: #667eea;
+        /* FILTERS */
+        .filters-row { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .filter-btn {
+            padding: 6px 14px; border-radius: 20px; border: 1px solid #d1d5db;
+            background: white; cursor: pointer; font-size: 13px; transition: all 0.2s;
         }
+        .filter-btn.active, .filter-btn:hover { background: #667eea; color: white; border-color: #667eea; }
 
-        .btn {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 5px;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 16px;
-            background: #667eea;
-            color: white;
-            transition: all 0.3s;
+        /* EMPTY STATE */
+        .empty-state { text-align: center; padding: 60px 20px; color: #aaa; background: white; border-radius: 12px; border: 1px solid #e5e7eb; }
+        .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+        .empty-state p { font-size: 14px; line-height: 1.6; }
+
+        /* PLAN BADGE */
+        .plan-badge {
+            font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px;
         }
+        .plan-basico { background: #e0e7ff; color: #3730a3; }
+        .plan-plus { background: #d1fae5; color: #065f46; }
+        .plan-premium { background: #fef3c7; color: #92400e; }
 
-        .btn:hover {
-            background: #5568d3;
+        /* TOAST */
+        .toast {
+            position: fixed; bottom: 24px; right: 24px; background: #1a1a2e;
+            color: white; padding: 12px 20px; border-radius: 8px; font-size: 14px;
+            z-index: 9999; transform: translateY(100px); transition: transform 0.3s;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3); max-width: 320px;
         }
+        .toast.show { transform: translateY(0); }
+        .toast.success { border-left: 4px solid #10b981; }
+        .toast.error { border-left: 4px solid #ef4444; }
+        .toast.info { border-left: 4px solid #3b82f6; }
 
-        .success-message {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
+        /* SPINNER */
+        .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 5px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        .error-message {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
+        /* HELP BOX */
+        .help-box { background: white; border-radius: 12px; padding: 20px; margin-bottom: 24px; border: 1px solid #e5e7eb; }
+        .help-box h3 { font-size: 15px; font-weight: 600; margin-bottom: 12px; color: #374151; }
+        .how-it-works { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .step { text-align: center; padding: 16px; background: #f9fafb; border-radius: 8px; }
+        .step-icon { font-size: 28px; margin-bottom: 8px; }
+        .step-title { font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 4px; }
+        .step-desc { font-size: 12px; color: #888; line-height: 1.4; }
 
-        .info-box {
-            background: #e7f3ff;
-            border-left: 4px solid #2196F3;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 4px;
-        }
-
-        .link {
-            color: #667eea;
-            cursor: pointer;
-            text-decoration: underline;
-        }
-
-        .link:hover {
-            color: #5568d3;
-        }
-
-        .text-center {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 14px;
+        @media (max-width: 700px) {
+            .stats-section { grid-template-columns: repeat(2, 1fr); }
+            .how-it-works { grid-template-columns: 1fr; }
+            .setup-banner { flex-direction: column; }
+            .place-id-form input { width: 100%; }
         }
     </style>
 </head>
 <body>
-    <div class="auth-container">
-        <div class="auth-box">
-            <h1>🔍 LynxReview</h1>
 
-            <div id="message"></div>
+<!-- AUTH SECTION -->
+<div class="auth-container" id="authContainer">
+    <div class="auth-box">
+        <h1>🔍 LynxReview</h1>
+        <p class="subtitle">Gestión inteligente de reseñas</p>
 
-            <div id="loginForm">
-                <h2 style="color: #667eea; font-size: 20px; margin-bottom: 20px;">Login</h2>
+        <div id="authMessage"></div>
 
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="loginEmail" placeholder="tu@email.com">
-                </div>
-
-                <div class="form-group">
-                    <label>Contraseña</label>
-                    <input type="password" id="loginPassword" placeholder="•••••••">
-                </div>
-
-                <button class="btn" onclick="handleLogin()">Inicia Sesión</button>
-
-                <div class="text-center">
-                    ¿No tienes cuenta? <span class="link" onclick="showSignup()">Regístrate</span>
-                </div>
+        <!-- LOGIN FORM -->
+        <div id="loginForm">
+            <h2 style="color:#667eea;font-size:18px;margin-bottom:20px;">Iniciar sesión</h2>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="loginEmail" placeholder="tu@email.com" onkeydown="if(event.key==='Enter') doLogin()">
             </div>
-
-            <div id="signupForm" style="display: none;">
-                <h2 style="color: #667eea; font-size: 20px; margin-bottom: 20px;">Crear Cuenta</h2>
-
-                <div class="form-group">
-                    <label>Nombre</label>
-                    <input type="text" id="signupName" placeholder="Tu nombre">
-                </div>
-
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="signupEmail" placeholder="tu@email.com">
-                </div>
-
-                <div class="form-group">
-                    <label>Nombre del Negocio</label>
-                    <input type="text" id="signupBusiness" placeholder="Mi Negocio">
-                </div>
-
-                <div class="form-group">
-                    <label>Contraseña</label>
-                    <input type="password" id="signupPassword" placeholder="•••••••">
-                </div>
-
-                <button class="btn" onclick="handleSignup()">Registrarse</button>
-
-                <div class="text-center">
-                    ¿Ya tienes cuenta? <span class="link" onclick="showLogin()">Inicia sesión</span>
-                </div>
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" id="loginPassword" placeholder="•••••••" onkeydown="if(event.key==='Enter') doLogin()">
             </div>
+            <button class="btn-auth" onclick="doLogin()" id="btnLogin">Iniciar sesión</button>
+            <div class="auth-toggle">
+                ¿No tienes cuenta? <span onclick="showSignup()">Regístrate aquí</span>
+            </div>
+        </div>
 
-            <div class="info-box" style="margin-top: 30px; font-size: 12px;">
-                <strong>ℹ️ Información de Prueba:</strong><br>
-                Servidor: https://lynxreview-webhook.onrender.com<br>
-                Estado: ✅ Activo
+        <!-- SIGNUP FORM -->
+        <div id="signupForm" style="display:none;">
+            <h2 style="color:#667eea;font-size:18px;margin-bottom:20px;">Crear cuenta</h2>
+            <div class="form-group">
+                <label>Tu nombre</label>
+                <input type="text" id="signupName" placeholder="Juan García">
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="signupEmail" placeholder="tu@email.com">
+            </div>
+            <div class="form-group">
+                <label>Nombre del negocio</label>
+                <input type="text" id="signupBusiness" placeholder="Restaurante El Rincón">
+            </div>
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" id="signupPassword" placeholder="•••••••">
+            </div>
+            <button class="btn-auth" onclick="doSignup()" id="btnSignup">Crear cuenta</button>
+            <div class="auth-toggle">
+                ¿Ya tienes cuenta? <span onclick="showLogin()">Inicia sesión</span>
             </div>
         </div>
     </div>
+</div>
 
-    <script>
-        const API_URL = 'https://lynxreview-webhook.onrender.com';
+<!-- DASHBOARD -->
+<div class="dashboard" id="dashboard">
 
-        function showMessage(msg, type = 'success') {
-            const messageDiv = document.getElementById('message');
-            messageDiv.innerHTML = `<div class="${type}-message">${msg}</div>`;
-            setTimeout(() => {
-                messageDiv.innerHTML = '';
-            }, 5000);
-        }
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <span class="topbar-logo">🔍 LynxReview</span>
+            <span class="business-name" id="businessName">Mi negocio</span>
+            <span class="plan-badge plan-basico" id="planBadge">Básico</span>
+        </div>
+        <div class="topbar-right">
+            <span class="user-name" id="userName">Usuario</span>
+            <button class="btn-logout" onclick="doLogout()">Cerrar sesión</button>
+        </div>
+    </div>
 
-        function showLogin() {
-            document.getElementById('loginForm').style.display = 'block';
-            document.getElementById('signupForm').style.display = 'none';
-            document.getElementById('message').innerHTML = '';
-        }
+    <!-- STATS -->
+    <div class="stats-section">
+        <div class="stat-card stat-total">
+            <div class="stat-value" id="statTotal">-</div>
+            <div class="stat-label">Total reseñas recibidas</div>
+        </div>
+        <div class="stat-card stat-approved">
+            <div class="stat-value" id="statAutoRespondidas">-</div>
+            <div class="stat-label">Respondidas por IA ✨</div>
+        </div>
+        <div class="stat-card stat-pending">
+            <div class="stat-value" id="statPendientes">-</div>
+            <div class="stat-label">Pendientes de revisión</div>
+        </div>
+        <div class="stat-card stat-published">
+            <div class="stat-value" id="statPublicadas">-</div>
+            <div class="stat-label">Publicadas en Google</div>
+        </div>
+    </div>
 
-        function showSignup() {
-            document.getElementById('loginForm').style.display = 'none';
-            document.getElementById('signupForm').style.display = 'block';
-            document.getElementById('message').innerHTML = '';
-        }
+    <div class="main">
 
-        async function handleLogin() {
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
+        <!-- SETUP BANNER (si no tiene Place ID) -->
+        <div id="setupBanner" class="setup-banner" style="display:none;">
+            <div>
+                <h3>📍 Conecta tu negocio de Google</h3>
+                <p>Para empezar a monitorear tus reseñas, necesitamos el <strong>Google Place ID</strong> de tu negocio.<br>Búscalo en: <strong>maps.google.com</strong> → busca tu negocio → "Compartir" → copia el ID del enlace.</p>
+            </div>
+            <div>
+                <div class="place-id-form">
+                    <input type="text" id="placeIdInput" placeholder="ChIJN1t_tDeuEmsRUsoyG83frY4">
+                    <button class="btn-save-place" onclick="guardarPlaceId()">Guardar y conectar</button>
+                </div>
+            </div>
+        </div>
 
-            if (!email || !password) {
-                showMessage('Por favor completa todos los campos', 'error');
-                return;
+        <div id="setupDone" class="setup-done" style="display:none;">
+            ✅ <span>Tu negocio está conectado. Las reseñas de Google se monitorizan automáticamente.</span>
+        </div>
+
+        <!-- CÓMO FUNCIONA -->
+        <div class="help-box" id="helpBox" style="display:none;">
+            <h3>🤖 Cómo funciona LynxReview</h3>
+            <div class="how-it-works">
+                <div class="step">
+                    <div class="step-icon">⭐⭐⭐⭐⭐</div>
+                    <div class="step-title">5 estrellas</div>
+                    <div class="step-desc">La IA responde automáticamente. Sin intervención humana.</div>
+                </div>
+                <div class="step">
+                    <div class="step-icon">⭐⭐⭐⭐</div>
+                    <div class="step-title">Menos de 5 estrellas</div>
+                    <div class="step-desc">La IA genera una propuesta y la revisamos antes de publicar.</div>
+                </div>
+                <div class="step">
+                    <div class="step-icon">📋</div>
+                    <div class="step-title">Tú en control</div>
+                    <div class="step-desc">Ves el estado de cada respuesta en tiempo real aquí.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESEÑAS -->
+        <div class="section-header">
+            <div class="section-title">Mis reseñas</div>
+            <button class="btn-refresh" onclick="actualizarResenas()" id="btnUpdate">
+                🔄 Actualizar reseñas
+            </button>
+        </div>
+
+        <div class="filters-row">
+            <button class="filter-btn active" onclick="filtrar('todas', this)">Todas</button>
+            <button class="filter-btn" onclick="filtrar('5', this)">⭐⭐⭐⭐⭐ 5 estrellas</button>
+            <button class="filter-btn" onclick="filtrar('menos5', this)">⭐ Menos de 5</button>
+            <button class="filter-btn" onclick="filtrar('pendiente_aprobacion', this)">⏳ En revisión</button>
+            <button class="filter-btn" onclick="filtrar('publicada', this)">✅ Publicadas</button>
+        </div>
+
+        <div id="resenasList"></div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+    const API_URL = 'https://lynxreview-webhook.onrender.com';
+    let authToken = '';
+    let clienteData = {};
+    let resenasData = [];
+    let filtroActual = 'todas';
+
+    // ============ AUTH ============
+    function showLogin() {
+        document.getElementById('loginForm').style.display = 'block';
+        document.getElementById('signupForm').style.display = 'none';
+        document.getElementById('authMessage').innerHTML = '';
+    }
+
+    function showSignup() {
+        document.getElementById('loginForm').style.display = 'none';
+        document.getElementById('signupForm').style.display = 'block';
+        document.getElementById('authMessage').innerHTML = '';
+    }
+
+    function showMsg(msg, type) {
+        document.getElementById('authMessage').innerHTML = `<div class="msg-${type}">${msg}</div>`;
+    }
+
+    async function doLogin() {
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        if (!email || !password) { showMsg('Completa todos los campos', 'error'); return; }
+
+        const btn = document.getElementById('btnLogin');
+        btn.textContent = 'Conectando...'; btn.disabled = true;
+
+        try {
+            const res = await fetch(`${API_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, contrasena: password })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                authToken = data.token;
+                clienteData = data.cliente;
+                openDashboard();
+            } else {
+                showMsg('❌ ' + (data.error || 'Credenciales incorrectas'), 'error');
             }
+        } catch(e) { showMsg('❌ Error de conexión: ' + e.message, 'error'); }
 
-            try {
-                showMessage('Conectando con el servidor...', 'success');
+        btn.textContent = 'Iniciar sesión'; btn.disabled = false;
+    }
 
-                const response = await fetch(`${API_URL}/auth/login`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email, contrasena: password })
-                });
+    async function doSignup() {
+        const nombre = document.getElementById('signupName').value.trim();
+        const email = document.getElementById('signupEmail').value.trim();
+        const nombreLocal = document.getElementById('signupBusiness').value.trim();
+        const password = document.getElementById('signupPassword').value;
 
-                const data = await response.json();
+        if (!nombre || !email || !nombreLocal || !password) { showMsg('Completa todos los campos', 'error'); return; }
 
-                if (response.ok) {
-                    showMessage('✅ Login exitoso. Abriendo dashboard...', 'success');
-                    console.log('Token:', data.token);
-                    console.log('Cliente:', data.cliente);
-                    setTimeout(() => {
-                        showDashboard(data);
-                    }, 1500);
-                } else {
-                    showMessage('❌ Error: ' + (data.error || 'No se pudo iniciar sesión'), 'error');
-                }
-            } catch (error) {
-                showMessage('❌ Error de conexión: ' + error.message, 'error');
-                console.error('Error:', error);
+        const btn = document.getElementById('btnSignup');
+        btn.textContent = 'Creando cuenta...'; btn.disabled = true;
+
+        try {
+            const res = await fetch(`${API_URL}/auth/signup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre, email, nombreLocal, contrasena: password })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                authToken = data.token;
+                clienteData = data.cliente;
+                openDashboard();
+            } else {
+                showMsg('❌ ' + (data.error || 'No se pudo crear la cuenta'), 'error');
             }
+        } catch(e) { showMsg('❌ Error de conexión', 'error'); }
+
+        btn.textContent = 'Crear cuenta'; btn.disabled = false;
+    }
+
+    function doLogout() {
+        authToken = '';
+        clienteData = {};
+        resenasData = [];
+        document.getElementById('dashboard').style.display = 'none';
+        document.getElementById('authContainer').style.display = 'flex';
+        document.getElementById('loginEmail').value = '';
+        document.getElementById('loginPassword').value = '';
+        showLogin();
+    }
+
+    function headers() {
+        return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` };
+    }
+
+    // ============ DASHBOARD ============
+    function openDashboard() {
+        document.getElementById('authContainer').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+
+        // Datos del cliente
+        document.getElementById('businessName').textContent = clienteData.nombreLocal || 'Mi negocio';
+        document.getElementById('userName').textContent = clienteData.nombre || '';
+
+        const planEl = document.getElementById('planBadge');
+        const plan = clienteData.plan || 'basico';
+        planEl.textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
+        planEl.className = `plan-badge plan-${plan}`;
+
+        // Setup banner
+        if (clienteData.googlePlaceId) {
+            document.getElementById('setupDone').style.display = 'flex';
+            document.getElementById('helpBox').style.display = 'block';
+        } else {
+            document.getElementById('setupBanner').style.display = 'flex';
+            document.getElementById('helpBox').style.display = 'block';
         }
 
-        async function handleSignup() {
-            const nombre = document.getElementById('signupName').value;
-            const email = document.getElementById('signupEmail').value;
-            const nombreLocal = document.getElementById('signupBusiness').value;
-            const password = document.getElementById('signupPassword').value;
+        cargarResenas();
+    }
 
-            if (!nombre || !email || !nombreLocal || !password) {
-                showMessage('Por favor completa todos los campos', 'error');
-                return;
-            }
+    async function cargarResenas() {
+        try {
+            const res = await fetch(`${API_URL}/cliente/resenas`, { headers: headers() });
+            if (!res.ok) return;
+            resenasData = await res.json();
+            calcularStats();
+            renderResenas();
+        } catch(e) { console.error(e); }
+    }
 
-            try {
-                showMessage('Creando cuenta...', 'success');
+    function calcularStats() {
+        const total = resenasData.length;
+        const autoRespondidas = resenasData.filter(r => r.resena?.calificacion === 5 && r.respuesta?.estado === 'aprobada').length;
+        const pendientes = resenasData.filter(r => r.respuesta?.estado === 'pendiente_aprobacion').length;
+        const publicadas = resenasData.filter(r => r.respuesta?.estado === 'publicada').length;
 
-                const response = await fetch(`${API_URL}/auth/signup`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        nombre,
-                        email,
-                        nombreLocal,
-                        contrasena: password
-                    })
-                });
+        document.getElementById('statTotal').textContent = total;
+        document.getElementById('statAutoRespondidas').textContent = autoRespondidas;
+        document.getElementById('statPendientes').textContent = pendientes;
+        document.getElementById('statPublicadas').textContent = publicadas;
+    }
 
-                const data = await response.json();
+    function filtrar(tipo, btn) {
+        filtroActual = tipo;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderResenas();
+    }
 
-                if (response.ok) {
-                    showMessage('✅ Cuenta creada. Abriendo dashboard...', 'success');
-                    console.log('Token:', data.token);
-                    console.log('Cliente:', data.cliente);
-                    setTimeout(() => {
-                        showDashboard(data);
-                    }, 1500);
-                } else {
-                    showMessage('❌ Error: ' + (data.error || 'No se pudo crear la cuenta'), 'error');
-                }
-            } catch (error) {
-                showMessage('❌ Error de conexión: ' + error.message, 'error');
-                console.error('Error:', error);
-            }
+    function renderResenas() {
+        const container = document.getElementById('resenasList');
+        let datos = resenasData;
+
+        if (filtroActual === '5') datos = datos.filter(r => r.resena?.calificacion === 5);
+        else if (filtroActual === 'menos5') datos = datos.filter(r => r.resena?.calificacion < 5);
+        else if (filtroActual === 'pendiente_aprobacion') datos = datos.filter(r => r.respuesta?.estado === 'pendiente_aprobacion');
+        else if (filtroActual === 'publicada') datos = datos.filter(r => r.respuesta?.estado === 'publicada');
+
+        if (!datos.length) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="icon">${filtroActual === 'todas' ? '📭' : '🔍'}</div>
+                    <p>${filtroActual === 'todas'
+                        ? 'Aún no hay reseñas. Haz clic en "Actualizar reseñas" para obtenerlas de Google.'
+                        : 'No hay reseñas en esta categoría.'}</p>
+                </div>`;
+            return;
         }
 
-        function showDashboard(data) {
-            document.body.innerHTML = `
-                <div style="padding: 20px; font-family: Arial; background: #f5f7fa; min-height: 100vh;">
-                    <div style="max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                        <h1 style="color: #667eea; margin-bottom: 30px;">✅ ¡Dashboard Conectado!</h1>
+        container.innerHTML = datos.map(item => {
+            const r = item.resena || {};
+            const resp = item.respuesta;
+            const stars = '⭐'.repeat(r.calificacion || 0);
+            const fecha = r.fecha ? new Date(r.fecha).toLocaleDateString('es-ES') : '';
+            const estadoBadge = getEstadoBadge(resp?.estado);
+            const esAuto = r.calificacion === 5 && resp?.estado === 'aprobada';
 
-                        <div style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
-                            <strong>✅ Servidor Conectado Exitosamente</strong><br>
-                            Tu backend en Render está funcionando correctamente.
-                        </div>
-
-                        <h2 style="color: #333; margin-top: 30px;">Información de tu Cuenta:</h2>
-                        <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0;">
-                            <p><strong>Nombre:</strong> ${data.cliente.nombre}</p>
-                            <p><strong>Email:</strong> ${data.cliente.email}</p>
-                            <p><strong>Token (primeros 50 caracteres):</strong> ${data.token.substring(0, 50)}...</p>
-                        </div>
-
-                        <h2 style="color: #333; margin-top: 30px;">Próximos Pasos:</h2>
-                        <ol style="line-height: 1.8;">
-                            <li>✅ <strong>Backend:</strong> Servidor corriendo en Render</li>
-                            <li>✅ <strong>Base de Datos:</strong> MongoDB conectada</li>
-                            <li>✅ <strong>Autenticación:</strong> JWT funcionando</li>
-                            <li>⏳ <strong>Google Cloud:</strong> Esperar verificación bancaria (24-48 horas)</li>
-                            <li>⏳ <strong>APIs:</strong> Google Places + OpenAI</li>
-                            <li>⏳ <strong>Automatización:</strong> Detección de reseñas cada 12 horas</li>
-                        </ol>
-
-                        <h2 style="color: #333; margin-top: 30px;">URLs Importantes:</h2>
-                        <div style="background: #e7f3ff; border-left: 4px solid #2196F3; padding: 15px; border-radius: 4px;">
-                            <p><strong>API Backend:</strong> <a href="https://lynxreview-webhook.onrender.com" target="_blank" style="color: #2196F3;">https://lynxreview-webhook.onrender.com</a></p>
-                            <p><strong>GitHub:</strong> <a href="https://github.com/lynxreview/lynxreview-webhook" target="_blank" style="color: #2196F3;">github.com/lynxreview/lynxreview-webhook</a></p>
-                        </div>
-
-                        <button onclick="location.reload()" style="background: #667eea; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 30px;">
-                            Volver a Login
-                        </button>
+            return `
+            <div class="review-card">
+                <div class="review-header">
+                    <div>
+                        <div class="review-author">${r.autorNombre || 'Anónimo'}</div>
+                        <div class="review-date">${fecha}</div>
+                    </div>
+                    <div class="review-right">
+                        <span class="stars">${stars}</span>
+                        ${resp ? `<span class="estado-badge ${estadoBadge.class}">${estadoBadge.label}</span>` : ''}
                     </div>
                 </div>
-            `;
-        }
-    </script>
+                <div class="review-text">"${r.textoResena || 'Sin comentario'}"</div>
+                ${resp ? `
+                <div class="response-section">
+                    <div class="response-label">
+                        🤖 Respuesta IA
+                        ${esAuto ? '<span class="auto-badge">Respondida automáticamente</span>' : ''}
+                        ${resp.estado === 'pendiente_aprobacion' ? '<span style="color:#92400e;font-size:11px;font-weight:400;"> — En revisión por nuestro equipo</span>' : ''}
+                    </div>
+                    <div class="response-text">${resp.textoRespuesta || ''}</div>
+                </div>` : '<p style="color:#aaa;font-size:13px;margin-top:8px;">Sin respuesta todavía</p>'}
+            </div>`;
+        }).join('');
+    }
+
+    function getEstadoBadge(estado) {
+        const map = {
+            'pendiente_aprobacion': { class: 'estado-pendiente', label: '⏳ En revisión' },
+            'aprobada':             { class: 'estado-aprobada',  label: '✅ Aprobada' },
+            'rechazada':            { class: 'estado-rechazada', label: '❌ Rechazada' },
+            'publicada':            { class: 'estado-publicada', label: '🚀 Publicada' },
+        };
+        return map[estado] || { class: 'estado-pendiente', label: estado || '-' };
+    }
+
+    // ============ PLACE ID ============
+    async function guardarPlaceId() {
+        const val = document.getElementById('placeIdInput').value.trim();
+        if (!val) { showToast('Introduce un Google Place ID válido', 'error'); return; }
+        try {
+            const res = await fetch(`${API_URL}/cliente/google-place-id`, {
+                method: 'PUT',
+                headers: headers(),
+                body: JSON.stringify({ placeId: val })
+            });
+            if (res.ok) {
+                showToast('✅ ¡Negocio conectado! Actualizando reseñas...', 'success');
+                clienteData.googlePlaceId = val;
+                document.getElementById('setupBanner').style.display = 'none';
+                document.getElementById('setupDone').style.display = 'flex';
+                await actualizarResenas();
+            } else {
+                showToast('Error al guardar el Place ID', 'error');
+            }
+        } catch(e) { showToast('Error de conexión', 'error'); }
+    }
+
+    // ============ ACTUALIZAR RESEÑAS ============
+    async function actualizarResenas() {
+        const btn = document.getElementById('btnUpdate');
+        btn.innerHTML = '<span class="spinner"></span> Procesando...';
+        btn.disabled = true;
+        try {
+            const res = await fetch(`${API_URL}/cliente/procesar-resenas`, {
+                method: 'POST', headers: headers()
+            });
+            if (res.ok) {
+                const data = await res.json();
+                showToast(`✅ ${data.nuevas || 0} nuevas reseñas procesadas`, 'success');
+                await cargarResenas();
+            } else {
+                const err = await res.json();
+                showToast('Error: ' + (err.error || 'No se pudo procesar'), 'error');
+            }
+        } catch(e) { showToast('Error de conexión', 'error'); }
+        btn.innerHTML = '🔄 Actualizar reseñas';
+        btn.disabled = false;
+    }
+
+    // ============ TOAST ============
+    function showToast(msg, type = 'success') {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.className = `toast ${type} show`;
+        setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+</script>
 </body>
 </html>

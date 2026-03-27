@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LynxReview - Panel Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: #333; }
+
+        /* LOGIN */
+        .login-screen {
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        }
+        .login-box {
+            background: white; padding: 40px; border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4); width: 100%; max-width: 380px;
+        }
+        .login-box h1 { color: #667eea; text-align: center; margin-bottom: 8px; font-size: 26px; }
+        .login-box p { text-align: center; color: #888; margin-bottom: 30px; font-size: 13px; }
+        .login-box input {
+            width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 8px;
+            font-size: 14px; margin-bottom: 16px;
+        }
+        .login-box input:focus { outline: none; border-color: #667eea; }
+        .login-btn {
+            width: 100%; padding: 12px; background: #667eea; color: white;
+            border: none; border-radius: 8px; font-size: 15px; font-weight: 600;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .login-btn:hover { background: #5568d3; }
+
+        /* MAIN LAYOUT */
+        .main-screen { display: none; min-height: 100vh; }
+        .topbar {
+            background: #1a1a2e; color: white; padding: 0 24px;
+            display: flex; align-items: center; justify-content: space-between;
+            height: 60px; position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .topbar-logo { font-size: 20px; font-weight: 700; color: #667eea; }
+        .topbar-actions { display: flex; gap: 10px; align-items: center; }
+        .btn-process-all {
+            background: #667eea; color: white; border: none; padding: 8px 16px;
+            border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;
+            transition: background 0.2s;
+        }
+        .btn-process-all:hover { background: #5568d3; }
+        .btn-logout { background: transparent; color: #aaa; border: 1px solid #444;
+            padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .btn-logout:hover { color: white; border-color: #888; }
+
+        /* STATS */
+        .stats-bar {
+            display: grid; grid-template-columns: repeat(5, 1fr);
+            gap: 16px; padding: 20px 24px; background: white;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .stat-card {
+            text-align: center; padding: 16px; border-radius: 10px; background: #f9fafb;
+            border: 1px solid #e5e7eb;
+        }
+        .stat-number { font-size: 28px; font-weight: 700; }
+        .stat-label { font-size: 12px; color: #666; margin-top: 4px; }
+        .stat-card.pending .stat-number { color: #f59e0b; }
+        .stat-card.approved .stat-number { color: #10b981; }
+        .stat-card.published .stat-number { color: #3b82f6; }
+        .stat-card.total .stat-number { color: #667eea; }
+        .stat-card.clients .stat-number { color: #8b5cf6; }
+
+        /* TABS */
+        .tabs { display: flex; padding: 0 24px; background: white; border-bottom: 2px solid #e5e7eb; }
+        .tab {
+            padding: 14px 24px; cursor: pointer; font-weight: 500; color: #666;
+            border-bottom: 3px solid transparent; margin-bottom: -2px;
+            transition: all 0.2s; font-size: 14px;
+        }
+        .tab:hover { color: #667eea; }
+        .tab.active { color: #667eea; border-bottom-color: #667eea; font-weight: 600; }
+        .badge {
+            display: inline-block; background: #f59e0b; color: white;
+            border-radius: 10px; padding: 1px 7px; font-size: 11px; margin-left: 6px;
+        }
+
+        /* CONTENT */
+        .content { padding: 24px; max-width: 1200px; margin: 0 auto; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* REVIEW CARDS */
+        .review-card {
+            background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08); border: 1px solid #e5e7eb;
+        }
+        .review-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        .review-meta { display: flex; flex-direction: column; gap: 4px; }
+        .review-author { font-weight: 600; font-size: 15px; }
+        .review-business { font-size: 12px; color: #888; }
+        .review-date { font-size: 12px; color: #aaa; }
+        .stars { color: #f59e0b; font-size: 18px; }
+        .estado-badge {
+            padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+        }
+        .estado-pendiente { background: #fef3c7; color: #92400e; }
+        .estado-aprobada { background: #d1fae5; color: #065f46; }
+        .estado-rechazada { background: #fee2e2; color: #991b1b; }
+        .estado-publicada { background: #dbeafe; color: #1e40af; }
+
+        .review-text {
+            background: #f9fafb; padding: 12px; border-radius: 8px;
+            margin-bottom: 12px; font-size: 14px; line-height: 1.5; color: #444;
+            border-left: 3px solid #d1d5db;
+        }
+        .ai-response-section { margin-top: 12px; }
+        .ai-response-label {
+            font-size: 12px; font-weight: 600; color: #667eea; margin-bottom: 6px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .ai-response-text {
+            background: #eff6ff; padding: 12px; border-radius: 8px;
+            font-size: 14px; line-height: 1.5; color: #1e3a5f;
+            border-left: 3px solid #667eea;
+            width: 100%;
+        }
+        textarea.ai-response-text {
+            resize: vertical; min-height: 80px; font-family: inherit;
+            border: 1px solid #c7d2fe; outline: none;
+        }
+        textarea.ai-response-text:focus { border-color: #667eea; }
+
+        .review-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+        .btn { padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600;
+            cursor: pointer; border: none; transition: all 0.2s; }
+        .btn-approve { background: #10b981; color: white; }
+        .btn-approve:hover { background: #059669; }
+        .btn-reject { background: #ef4444; color: white; }
+        .btn-reject:hover { background: #dc2626; }
+        .btn-publish { background: #3b82f6; color: white; }
+        .btn-publish:hover { background: #2563eb; }
+        .btn-edit { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
+        .btn-edit:hover { background: #e5e7eb; }
+        .btn-copy { background: #8b5cf6; color: white; }
+        .btn-copy:hover { background: #7c3aed; }
+
+        /* CLIENTS TAB */
+        .client-card {
+            background: white; border-radius: 12px; padding: 20px; margin-bottom: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08); border: 1px solid #e5e7eb;
+            display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: start;
+        }
+        .client-info h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+        .client-info p { font-size: 13px; color: #666; margin-bottom: 4px; }
+        .client-plan { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+        .plan-basico { background: #e0e7ff; color: #3730a3; }
+        .plan-plus { background: #d1fae5; color: #065f46; }
+        .plan-premium { background: #fef3c7; color: #92400e; }
+        .plan-ninguno { background: #f3f4f6; color: #6b7280; }
+
+        .place-id-section { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+        .place-id-input {
+            flex: 1; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px;
+            font-size: 13px; outline: none;
+        }
+        .place-id-input:focus { border-color: #667eea; }
+        .btn-save-place { background: #667eea; color: white; padding: 8px 14px;
+            border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; }
+        .btn-save-place:hover { background: #5568d3; }
+        .btn-process-client { background: #10b981; color: white; padding: 8px 14px;
+            border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;
+            white-space: nowrap; }
+        .btn-process-client:hover { background: #059669; }
+        .btn-process-client:disabled { background: #9ca3af; cursor: not-allowed; }
+
+        /* FILTERS */
+        .filters {
+            display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-btn {
+            padding: 6px 14px; border-radius: 20px; border: 1px solid #d1d5db;
+            background: white; cursor: pointer; font-size: 13px; transition: all 0.2s;
+        }
+        .filter-btn.active, .filter-btn:hover { background: #667eea; color: white; border-color: #667eea; }
+
+        .search-input {
+            padding: 8px 14px; border: 1px solid #d1d5db; border-radius: 20px;
+            font-size: 13px; outline: none; flex: 1; max-width: 260px;
+        }
+        .search-input:focus { border-color: #667eea; }
+
+        /* MODAL */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            z-index: 1000; justify-content: center; align-items: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: white; border-radius: 12px; padding: 24px; width: 100%;
+            max-width: 480px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .modal h3 { margin-bottom: 16px; font-size: 18px; }
+        .modal textarea {
+            width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px;
+            resize: vertical; min-height: 100px; font-size: 13px; font-family: inherit;
+            outline: none; margin-bottom: 16px;
+        }
+        .modal textarea:focus { border-color: #667eea; }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+        .btn-modal-cancel { background: #f3f4f6; color: #374151; border: none; }
+        .btn-modal-confirm { background: #ef4444; color: white; border: none; }
+
+        /* TOAST */
+        .toast {
+            position: fixed; bottom: 24px; right: 24px; background: #1a1a2e;
+            color: white; padding: 12px 20px; border-radius: 8px;
+            font-size: 14px; z-index: 9999; transform: translateY(100px);
+            transition: transform 0.3s; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .toast.show { transform: translateY(0); }
+        .toast.success { border-left: 4px solid #10b981; }
+        .toast.error { border-left: 4px solid #ef4444; }
+        .toast.info { border-left: 4px solid #3b82f6; }
+
+        /* EMPTY STATE */
+        .empty-state {
+            text-align: center; padding: 60px 20px; color: #aaa;
+        }
+        .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+        .empty-state p { font-size: 15px; }
+
+        /* LOADING */
+        .spinner {
+            display: inline-block; width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;
+            border-top-color: white; animation: spin 0.7s linear infinite;
+            vertical-align: middle; margin-right: 6px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* SECTION HEADER */
+        .section-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px;
+        }
+        .section-title { font-size: 18px; font-weight: 700; color: #1a1a2e; }
+
+        /* STATUS DOT */
+        .status-dot {
+            display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+            margin-right: 5px;
+        }
+        .dot-active { background: #10b981; }
+        .dot-inactive { background: #9ca3af; }
+
+        /* INSTRUCTIONS BANNER */
+        .info-banner {
+            background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px;
+            padding: 12px 16px; margin-bottom: 20px; font-size: 13px; color: #1e40af;
+            display: flex; gap: 8px; align-items: flex-start;
+        }
+    </style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div class="login-screen" id="loginScreen">
+    <div class="login-box">
+        <h1>🔍 LynxReview</h1>
+        <p>Panel de Administración</p>
+        <input type="password" id="adminSecret" placeholder="Clave secreta de admin" onkeydown="if(event.key==='Enter') doLogin()">
+        <button class="login-btn" onclick="doLogin()">Entrar al Panel</button>
+    </div>
+</div>
+
+<!-- MAIN SCREEN -->
+<div class="main-screen" id="mainScreen">
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+        <div class="topbar-logo">🔍 LynxReview Admin</div>
+        <div class="topbar-actions">
+            <button class="btn-process-all" onclick="procesarTodo()" id="btnProcessAll">
+                ⚡ Procesar todas las reseñas
+            </button>
+            <button class="btn-logout" onclick="logout()">Cerrar sesión</button>
+        </div>
+    </div>
+
+    <!-- STATS BAR -->
+    <div class="stats-bar" id="statsBar">
+        <div class="stat-card clients">
+            <div class="stat-number" id="statClientes">-</div>
+            <div class="stat-label">Clientes activos</div>
+        </div>
+        <div class="stat-card total">
+            <div class="stat-number" id="statResenas">-</div>
+            <div class="stat-label">Total reseñas</div>
+        </div>
+        <div class="stat-card pending">
+            <div class="stat-number" id="statPendientes">-</div>
+            <div class="stat-label">Pendientes ⏳</div>
+        </div>
+        <div class="stat-card approved">
+            <div class="stat-number" id="statAprobadas">-</div>
+            <div class="stat-label">Auto-aprobadas ✅</div>
+        </div>
+        <div class="stat-card published">
+            <div class="stat-number" id="statPublicadas">-</div>
+            <div class="stat-label">Publicadas 🚀</div>
+        </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('pendientes')">
+            ⏳ Pendientes <span class="badge" id="badgePendientes">0</span>
+        </div>
+        <div class="tab" onclick="switchTab('resenas')">📋 Todas las reseñas</div>
+        <div class="tab" onclick="switchTab('clientes')">👥 Clientes</div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+        <!-- TAB: PENDIENTES -->
+        <div class="tab-content active" id="tab-pendientes">
+            <div class="info-banner">
+                ℹ️ Estas reseñas recibieron <strong>&lt; 5 estrellas</strong>. La IA ha generado una propuesta de respuesta. Puedes editarla, aprobarla o rechazarla.
+            </div>
+            <div id="pendientesList"></div>
+        </div>
+
+        <!-- TAB: TODAS LAS RESEÑAS -->
+        <div class="tab-content" id="tab-resenas">
+            <div class="section-header">
+                <div class="section-title">Todas las reseñas</div>
+                <div class="filters">
+                    <input type="text" class="search-input" placeholder="🔍 Buscar negocio o autor..." oninput="filtrarResenas(this.value)">
+                    <button class="filter-btn active" onclick="filtrarEstado('todos', this)">Todas</button>
+                    <button class="filter-btn" onclick="filtrarEstado('pendiente_aprobacion', this)">Pendientes</button>
+                    <button class="filter-btn" onclick="filtrarEstado('aprobada', this)">Aprobadas</button>
+                    <button class="filter-btn" onclick="filtrarEstado('publicada', this)">Publicadas</button>
+                    <button class="filter-btn" onclick="filtrarEstado('rechazada', this)">Rechazadas</button>
+                </div>
+            </div>
+            <div id="resenasList"></div>
+        </div>
+
+        <!-- TAB: CLIENTES -->
+        <div class="tab-content" id="tab-clientes">
+            <div class="section-header">
+                <div class="section-title">Gestión de clientes</div>
+            </div>
+            <div class="info-banner">
+                ℹ️ Cuando un cliente se suscribe, aparece aquí. Añade su <strong>Google Place ID</strong> para empezar a monitorear sus reseñas. Luego haz clic en "Procesar reseñas" para obtener las reseñas de Google con IA.
+            </div>
+            <div id="clientesList"></div>
+        </div>
+
+    </div>
+</div>
+
+<!-- MODAL RECHAZO -->
+<div class="modal-overlay" id="modalRechazo">
+    <div class="modal">
+        <h3>❌ Rechazar respuesta</h3>
+        <p style="color:#666; font-size:13px; margin-bottom:12px;">Indica el motivo del rechazo (opcional):</p>
+        <textarea id="motivoRechazo" placeholder="Ej: El tono no es adecuado..."></textarea>
+        <div class="modal-actions">
+            <button class="btn btn-modal-cancel" onclick="cerrarModal()">Cancelar</button>
+            <button class="btn btn-modal-confirm" onclick="confirmarRechazo()">Rechazar</button>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+    const API_URL = 'https://lynxreview-webhook.onrender.com';
+    let adminToken = '';
+    let pendientesData = [];
+    let resenasData = [];
+    let clientesData = [];
+    let rechazarRespuestaId = null;
+    let filtroEstadoActual = 'todos';
+    let busquedaActual = '';
+
+    // ============ LOGIN ============
+    function doLogin() {
+        const secret = document.getElementById('adminSecret').value.trim();
+        if (!secret) { showToast('Ingresa la clave secreta', 'error'); return; }
+        adminToken = secret;
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('mainScreen').style.display = 'block';
+        cargarTodo();
+    }
+
+    function logout() {
+        adminToken = '';
+        document.getElementById('loginScreen').style.display = 'flex';
+        document.getElementById('mainScreen').style.display = 'none';
+        document.getElementById('adminSecret').value = '';
+    }
+
+    function headers() {
+        return { 'Content-Type': 'application/json', 'x-admin-secret': adminToken };
+    }
+
+    // ============ CARGA DATOS ============
+    async function cargarTodo() {
+        await Promise.all([cargarStats(), cargarPendientes(), cargarResenas(), cargarClientes()]);
+    }
+
+    async function cargarStats() {
+        try {
+            const res = await fetch(`${API_URL}/admin/stats`, { headers: headers() });
+            if (res.status === 403) { showToast('Clave incorrecta', 'error'); logout(); return; }
+            const data = await res.json();
+            document.getElementById('statClientes').textContent = data.clientes ?? '-';
+            document.getElementById('statResenas').textContent = data.resenas ?? '-';
+            document.getElementById('statPendientes').textContent = data.pendientes ?? '-';
+            document.getElementById('statAprobadas').textContent = data.autoAprobadas ?? '-';
+            document.getElementById('statPublicadas').textContent = data.publicadas ?? '-';
+            document.getElementById('badgePendientes').textContent = data.pendientes ?? 0;
+        } catch(e) { console.error(e); }
+    }
+
+    async function cargarPendientes() {
+        try {
+            const res = await fetch(`${API_URL}/admin/pendientes`, { headers: headers() });
+            pendientesData = await res.json();
+            renderPendientes();
+        } catch(e) { console.error(e); }
+    }
+
+    async function cargarResenas() {
+        try {
+            const res = await fetch(`${API_URL}/admin/resenas`, { headers: headers() });
+            resenasData = await res.json();
+            renderResenas();
+        } catch(e) { console.error(e); }
+    }
+
+    async function cargarClientes() {
+        try {
+            const res = await fetch(`${API_URL}/admin/clientes`, { headers: headers() });
+            clientesData = await res.json();
+            renderClientes();
+        } catch(e) { console.error(e); }
+    }
+
+    // ============ RENDER PENDIENTES ============
+    function renderPendientes() {
+        const container = document.getElementById('pendientesList');
+        if (!pendientesData.length) {
+            container.innerHTML = `<div class="empty-state"><div class="icon">🎉</div><p>¡No hay respuestas pendientes de aprobación!</p></div>`;
+            return;
+        }
+        container.innerHTML = pendientesData.map(r => renderRespuestaCard(r, 'pendiente')).join('');
+    }
+
+    // ============ RENDER TODAS LAS RESEÑAS ============
+    function renderResenas() {
+        const container = document.getElementById('resenasList');
+        let datos = resenasData;
+
+        if (filtroEstadoActual !== 'todos') {
+            datos = datos.filter(r => r.respuesta && r.respuesta.estado === filtroEstadoActual);
+        }
+        if (busquedaActual) {
+            const q = busquedaActual.toLowerCase();
+            datos = datos.filter(r =>
+                (r.resena?.autorNombre || '').toLowerCase().includes(q) ||
+                (r.resena?.cliente?.nombreLocal || '').toLowerCase().includes(q)
+            );
+        }
+
+        if (!datos.length) {
+            container.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>No hay reseñas que mostrar</p></div>`;
+            return;
+        }
+        container.innerHTML = datos.map(r => renderRespuestaCard(r, 'todas')).join('');
+    }
+
+    function filtrarEstado(estado, btn) {
+        filtroEstadoActual = estado;
+        document.querySelectorAll('#tab-resenas .filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderResenas();
+    }
+
+    function filtrarResenas(val) {
+        busquedaActual = val;
+        renderResenas();
+    }
+
+    // ============ RENDER CARD ============
+    function renderRespuestaCard(item, modo) {
+        const resena = item.resena || item;
+        const respuesta = item.respuesta;
+        const stars = '⭐'.repeat(resena.calificacion || 0);
+        const fecha = resena.fecha ? new Date(resena.fecha).toLocaleDateString('es-ES') : '';
+        const nombreLocal = resena.cliente?.nombreLocal || resena.nombreLocal || '';
+        const respuestaId = respuesta?._id;
+        const estadoBadge = getEstadoBadge(respuesta?.estado);
+
+        const modoAprobacion = modo === 'pendiente';
+
+        return `
+        <div class="review-card" id="card-${respuestaId}">
+            <div class="review-header">
+                <div class="review-meta">
+                    <span class="review-author">${resena.autorNombre || 'Anónimo'}</span>
+                    <span class="review-business">📍 ${nombreLocal}</span>
+                    <span class="review-date">${fecha}</span>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+                    <span class="stars">${stars}</span>
+                    <span class="estado-badge ${estadoBadge.class}">${estadoBadge.label}</span>
+                </div>
+            </div>
+
+            <div class="review-text">"${resena.textoResena || 'Sin texto'}"</div>
+
+            ${respuesta ? `
+            <div class="ai-response-section">
+                <div class="ai-response-label">
+                    🤖 Respuesta IA
+                    ${modoAprobacion ? '<span style="color:#888;font-size:11px;font-weight:400;">— Puedes editar antes de aprobar</span>' : ''}
+                </div>
+                ${modoAprobacion ? `
+                    <textarea class="ai-response-text" id="texto-${respuestaId}">${respuesta.textoRespuesta || ''}</textarea>
+                ` : `
+                    <div class="ai-response-text">${respuesta.textoRespuesta || ''}</div>
+                `}
+            </div>
+
+            <div class="review-actions">
+                ${modoAprobacion ? `
+                    <button class="btn btn-approve" onclick="aprobar('${respuestaId}')">✅ Aprobar</button>
+                    <button class="btn btn-reject" onclick="abrirModalRechazo('${respuestaId}')">❌ Rechazar</button>
+                ` : ''}
+                ${respuesta.estado === 'aprobada' ? `
+                    <button class="btn btn-copy" onclick="copiarRespuesta('${respuestaId}', \`${escapeTemplate(respuesta.textoRespuesta)}\`)">📋 Copiar respuesta</button>
+                    <button class="btn btn-publish" onclick="publicar('${respuestaId}')">🚀 Marcar publicada</button>
+                ` : ''}
+                ${respuesta.estado === 'publicada' ? `
+                    <span style="color:#3b82f6;font-size:13px;">✅ Publicada en Google</span>
+                ` : ''}
+                ${respuesta.estado === 'rechazada' ? `
+                    <span style="color:#ef4444;font-size:13px;">❌ Rechazada: ${respuesta.motivoRechazo || 'sin motivo'}</span>
+                ` : ''}
+            </div>
+            ` : '<p style="color:#aaa;font-size:13px;margin-top:8px;">Sin respuesta generada</p>'}
+        </div>`;
+    }
+
+    function getEstadoBadge(estado) {
+        const map = {
+            'pendiente_aprobacion': { class: 'estado-pendiente', label: '⏳ Pendiente' },
+            'aprobada': { class: 'estado-aprobada', label: '✅ Aprobada' },
+            'rechazada': { class: 'estado-rechazada', label: '❌ Rechazada' },
+            'publicada': { class: 'estado-publicada', label: '🚀 Publicada' },
+        };
+        return map[estado] || { class: 'estado-pendiente', label: estado || 'Sin estado' };
+    }
+
+    function escapeTemplate(str) {
+        return (str || '').replace(/`/g, '\\`').replace(/\${/g, '\\${');
+    }
+
+    // ============ RENDER CLIENTES ============
+    function renderClientes() {
+        const container = document.getElementById('clientesList');
+        if (!clientesData.length) {
+            container.innerHTML = `<div class="empty-state"><div class="icon">👤</div><p>No hay clientes registrados todavía</p></div>`;
+            return;
+        }
+        container.innerHTML = clientesData.map(c => {
+            const planBadge = getPlanBadge(c.plan);
+            const tienePlaceId = !!c.googlePlaceId;
+            return `
+            <div class="client-card">
+                <div class="client-info">
+                    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+                        <h3>${c.nombreLocal || c.nombre}</h3>
+                        <span class="client-plan ${planBadge.class}">${planBadge.label}</span>
+                        <span style="font-size:11px;color:#888;">
+                            <span class="status-dot ${c.suscripcionActiva ? 'dot-active' : 'dot-inactive'}"></span>
+                            ${c.suscripcionActiva ? 'Activo' : 'Inactivo'}
+                        </span>
+                    </div>
+                    <p>📧 ${c.email}</p>
+                    <p>👤 ${c.nombre}</p>
+                    <p style="color:${tienePlaceId ? '#059669' : '#f59e0b'};">
+                        📍 Place ID: ${tienePlaceId ? c.googlePlaceId : '⚠️ No configurado'}
+                    </p>
+                    <div class="place-id-section">
+                        <input class="place-id-input" id="placeId-${c._id}"
+                            value="${c.googlePlaceId || ''}"
+                            placeholder="ChIJ... (Google Place ID)">
+                        <button class="btn-save-place" onclick="guardarPlaceId('${c._id}')">Guardar</button>
+                    </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                    <button class="btn-process-client"
+                        onclick="procesarCliente('${c._id}', this)"
+                        ${!tienePlaceId ? 'disabled title="Necesitas añadir el Place ID primero"' : ''}>
+                        ${tienePlaceId ? '⚡ Procesar reseñas' : '⚠️ Sin Place ID'}
+                    </button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function getPlanBadge(plan) {
+        const map = {
+            'basico': { class: 'plan-basico', label: 'Básico' },
+            'plus': { class: 'plan-plus', label: 'Plus' },
+            'premium': { class: 'plan-premium', label: 'Premium' },
+        };
+        return map[plan] || { class: 'plan-ninguno', label: 'Sin plan' };
+    }
+
+    // ============ ACCIONES ============
+    async function aprobar(respuestaId) {
+        const textoEl = document.getElementById(`texto-${respuestaId}`);
+        const textoFinal = textoEl ? textoEl.value : null;
+        try {
+            const body = textoFinal ? { textoFinal } : {};
+            const res = await fetch(`${API_URL}/admin/respuesta/${respuestaId}/aprobar`, {
+                method: 'PUT',
+                headers: headers(),
+                body: JSON.stringify(body)
+            });
+            if (res.ok) {
+                showToast('✅ Respuesta aprobada. ¡Cópiala a Google!', 'success');
+                document.getElementById(`card-${respuestaId}`)?.remove();
+                await Promise.all([cargarStats(), cargarResenas()]);
+                pendientesData = pendientesData.filter(p => p.respuesta?._id !== respuestaId);
+            } else {
+                showToast('Error al aprobar', 'error');
+            }
+        } catch(e) { showToast('Error de conexión', 'error'); }
+    }
+
+    function abrirModalRechazo(id) {
+        rechazarRespuestaId = id;
+        document.getElementById('motivoRechazo').value = '';
+        document.getElementById('modalRechazo').classList.add('active');
+    }
+
+    function cerrarModal() {
+        document.getElementById('modalRechazo').classList.remove('active');
+        rechazarRespuestaId = null;
+    }
+
+    async function confirmarRechazo() {
+        const motivo = document.getElementById('motivoRechazo').value;
+        try {
+            const res = await fetch(`${API_URL}/admin/respuesta/${rechazarRespuestaId}/rechazar`, {
+                method: 'PUT',
+                headers: headers(),
+                body: JSON.stringify({ motivo })
+            });
+            if (res.ok) {
+                showToast('❌ Respuesta rechazada', 'info');
+                document.getElementById(`card-${rechazarRespuestaId}`)?.remove();
+                await Promise.all([cargarStats(), cargarResenas()]);
+                pendientesData = pendientesData.filter(p => p.respuesta?._id !== rechazarRespuestaId);
+            } else {
+                showToast('Error al rechazar', 'error');
+            }
+        } catch(e) { showToast('Error de conexión', 'error'); }
+        cerrarModal();
+    }
+
+    async function publicar(respuestaId) {
+        try {
+            const res = await fetch(`${API_URL}/admin/respuesta/${respuestaId}/publicar`, {
+                method: 'PUT', headers: headers()
+            });
+            if (res.ok) {
+                showToast('🚀 Marcada como publicada', 'success');
+                await Promise.all([cargarStats(), cargarResenas()]);
+            } else {
+                showToast('Error', 'error');
+            }
+        } catch(e) { showToast('Error de conexión', 'error'); }
+    }
+
+    function copiarRespuesta(id, texto) {
+        navigator.clipboard.writeText(texto).then(() => {
+            showToast('📋 ¡Respuesta copiada! Pégala en Google Maps', 'success');
+        });
+    }
+
+    async function guardarPlaceId(clienteId) {
+        const val = document.getElementById(`placeId-${clienteId}`).value.trim();
+        if (!val) { showToast('Ingresa un Place ID válido', 'error'); return; }
+        try {
+            const res = await fetch(`${API_URL}/admin/cliente/${clienteId}/place-id`, {
+                method: 'PUT',
+                headers: headers(),
+                body: JSON.stringify({ placeId: val })
+            });
+            if (res.ok) {
+                showToast('✅ Place ID guardado', 'success');
+                await cargarClientes();
+            } else {
+                showToast('Error al guardar', 'error');
+            }
+        } catch(e) { showToast('Error de conexión', 'error'); }
+    }
+
+    async function procesarCliente(clienteId, btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Procesando...';
+        try {
+            const res = await fetch(`${API_URL}/admin/procesar-cliente/${clienteId}`, {
+                method: 'POST', headers: headers()
+            });
+            if (res.ok) {
+                const data = await res.json();
+                showToast(`✅ ${data.nuevas || 0} nuevas reseñas procesadas`, 'success');
+                await cargarTodo();
+            } else {
+                const err = await res.json();
+                showToast('Error: ' + (err.error || 'No se pudo procesar'), 'error');
+            }
+        } catch(e) {
+            showToast('Error de conexión', 'error');
+        }
+        btn.disabled = false;
+        btn.innerHTML = '⚡ Procesar reseñas';
+    }
+
+    async function procesarTodo() {
+        const btn = document.getElementById('btnProcessAll');
+        btn.innerHTML = '<span class="spinner"></span> Procesando...';
+        btn.disabled = true;
+        try {
+            const res = await fetch(`${API_URL}/admin/procesar-todo`, {
+                method: 'POST', headers: headers()
+            });
+            if (res.ok) {
+                const data = await res.json();
+                showToast(`✅ Procesados ${data.clientes || 0} clientes`, 'success');
+                await cargarTodo();
+            } else {
+                showToast('Error al procesar', 'error');
+            }
+        } catch(e) { showToast('Error de conexión', 'error'); }
+        btn.innerHTML = '⚡ Procesar todas las reseñas';
+        btn.disabled = false;
+    }
+
+    // ============ TABS ============
+    function switchTab(tab) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab')[['pendientes','resenas','clientes'].indexOf(tab)].classList.add('active');
+        document.getElementById(`tab-${tab}`).classList.add('active');
+    }
+
+    // ============ TOAST ============
+    function showToast(msg, type = 'success') {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.className = `toast ${type} show`;
+        setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    // Close modal on overlay click
+    document.getElementById('modalRechazo').addEventListener('click', function(e) {
+        if (e.target === this) cerrarModal();
+    });
+
+    // Auto-refresh stats every 60 seconds
+    setInterval(() => {
+        if (adminToken) cargarStats();
+    }, 60000);
+</script>
+</body>
+</html>
