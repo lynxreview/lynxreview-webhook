@@ -232,6 +232,11 @@ async function procesarResenasCliente(cliente) {
 // 📄 SERVIR ARCHIVOS HTML
 // ═════════════════════════════════════════════════════════════════
 
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'dashboard-standalone.html'));
 });
@@ -741,6 +746,14 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
 app.listen(PORT, () => {
   console.log('\n🚀 Servidor corriendo en puerto ' + PORT);
   console.log('🌐 URL: https://lynxreview-webhook.onrender.com\n');
+  // Keep-alive: ping cada 14 min para evitar sleep en Render Free Tier
+  setInterval(() => {
+    const https = require('https');
+    https.get('https://lynxreview-webhook.onrender.com/health', () => {
+      console.log('[KEEP-ALIVE] Ping: ' + new Date().toLocaleTimeString());
+    }).on('error', (err) => console.log('[KEEP-ALIVE] Error:', err.message));
+  }, 14 * 60 * 1000);
+
 });
 
 module.exports = app;
