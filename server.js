@@ -4,6 +4,9 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const path = require('path');
 const OpenAI = require('openai');
+const QRCode = require('qrcode');
+const nodemailer = require('nodemailer');
+const PDFDocument = require('pdfkit');
 require('dotenv').config();
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
@@ -40,9 +43,9 @@ const PLAN_INFO = {
   premium: { nombre: 'Plan Premium',  precio: '59 €/mes', color: '#F5A623' }
 };
 
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════
 // 📊 ESQUEMAS DE MONGODB
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════
 
 const clienteSchema = new mongoose.Schema({
   nombre: String,
@@ -87,9 +90,23 @@ const respuestaSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+// Schema para códigos QR (FASE 2)
+const qrSchema = new mongoose.Schema({
+  codigo: { type: String, unique: true, required: true },
+  clienteId: mongoose.Schema.Types.ObjectId,
+  urlDestino: String,
+  datosQR: String,
+  scans: { type: Number, default: 0 },
+  ultimoScan: Date,
+  estado: { type: String, enum: ['activo', 'inactivo'], default: 'activo' },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
 const Cliente  = mongoose.model('Cliente',   clienteSchema);
 const Resena   = mongoose.model('Resena',    resenaSchema);
 const Respuesta = mongoose.model('Respuesta', respuestaSchema);
+const QR = mongoose.model('QR', qrSchema);
 
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
@@ -100,9 +117,9 @@ mongoose.connect(MONGODB_URI, {
   console.error('❌ Error conectando a MongoDB:', err);
 });
 
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════
 // 🔐 MIDDLEWARES
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════
 
 const verificarToken = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
@@ -124,9 +141,9 @@ const verificarAdmin = (req, res, next) => {
   next();
 };
 
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════
 // 🤖 LÓGICA IA + GOOGLE PLACES
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════
 
 async function obtenerResenasGoogle(placeId) {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
@@ -174,8 +191,7 @@ async function procesarResenasCliente(cliente) {
   for (const r of resenasGoogle) {
     const externalId = `${cliente._id}_${r.time}`;
 
-    const existe = await Resena.findOne({ resenaIdExterno: externalId });
-    if (existe) continue;
+    const existe = await Resena.findOne({ resenaIdExterno: externalId     });    if (existe) continue;
 
     // Guardar reseña
     const resena = new Resena({
@@ -212,9 +228,9 @@ async function procesarResenasCliente(cliente) {
   return { nuevas };
 }
 
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════
 // 📄 SERVIR ARCHIVOS HTML
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'dashboard-standalone.html'));
@@ -232,9 +248,9 @@ app.get('/admin.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════
 // 👤 AUTENTICACIÓN
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════
 
 app.post('/auth/signup', async (req, res) => {
   try {
@@ -280,9 +296,9 @@ app.post('/auth/login', async (req, res) => {
   }
 });
 
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════
 // 📊 RUTAS CLIENTE (PROTEGIDAS)
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════
 
 app.get('/cliente/perfil', verificarToken, async (req, res) => {
   const cliente = await Cliente.findById(req.clienteId).select('-contrasena');
@@ -325,9 +341,9 @@ app.get('/cliente/respuestas/pendientes', verificarToken, async (req, res) => {
   res.json(respuestas);
 });
 
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════
 // 🛡️ PANEL ADMIN (XAVIER)
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════
 
 // Stats generales
 app.get('/admin/stats', verificarAdmin, async (req, res) => {
@@ -432,10 +448,124 @@ app.post('/admin/procesar-cliente/:clienteId', verificarAdmin, async (req, res) 
   }
 });
 
-// ═══════════════════════════════════════════════════════════════
-// 💳 CHECKOUT CON STRIPE
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════
+// 🎯 QR GENERATOR (FASE 2)
+// ═════════════════════════════════════════════════════════════════
 
+// Configurar transporter de email (SMTP)
+const emailTransporter = nodemailer.createTransport({
+  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+  port: process.env.EMAIL_PORT || 587,
+  secure: false,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD
+  }
+});
+
+// Generar nuevo código QR
+app.post('/admin/qr/generar', verificarAdmin, async (req, res) => {
+  try {
+    const codigo = 'QR_' + Math.random().toString(36).substr(2, 9).toUpperCase();
+    const urlQR = `${FRONTEND_URL}/qr/${codigo}`;
+    const datosQR = await QRCode.toDataURL(urlQR);
+
+    const nuevoQR = new QR({ codigo, datosQR, estado: 'activo' });
+    await nuevoQR.save();
+
+    res.json({ mensaje: '✅ Código QR generado', qr: nuevoQR });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Listar todos los QRs (admin)
+app.get('/admin/qrs', verificarAdmin, async (req, res) => {
+  try {
+    const qrs = await QR.find({}).sort({ createdAt: -1 }).populate('clienteId', 'nombreLocal email');
+    res.json(qrs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Obtener detalles de un QR
+app.get('/admin/qr/:id', verificarAdmin, async (req, res) => {
+  try {
+    const qr = await QR.findById(req.params.id).populate('clienteId', 'nombreLocal email');
+    if (!qr) return res.status(404).json({ error: 'QR no encontrado' });
+    res.json(qr);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Vincular QR a cliente y actualizar URL destino
+app.put('/admin/qr/:id', verificarAdmin, async (req, res) => {
+  try {
+    const { clienteId, urlDestino } = req.body;
+    const qr = await QR.findByIdAndUpdate(
+      req.params.id,
+      { clienteId, urlDestino, updatedAt: new Date() },
+      { new: true }
+    ).populate('clienteId', 'nombreLocal email');
+    res.json({ mensaje: '✅ QR actualizado', qr });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Eliminar QR
+app.delete('/admin/qr/:id', verificarAdmin, async (req, res) => {
+  try {
+    await QR.findByIdAndDelete(req.params.id);
+    res.json({ mensaje: '✅ QR eliminado' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// RUTA PÚBLICA: Redirigir desde QR con tracking
+app.get('/qr/:codigo', async (req, res) => {
+  try {
+    const qr = await QR.findOne({ codigo: req.params.codigo });
+    if (!qr || !qr.urlDestino) return res.status(404).send('QR no encontrado');
+
+    // Registrar escaneo
+    await QR.findByIdAndUpdate(qr._id, {
+      scans: qr.scans + 1,
+      ultimoScan: new Date()
+    });
+
+    // Redirigir a Google Maps del cliente
+    res.redirect(qr.urlDestino);
+  } catch (err) {
+    res.status(500).send('Error procesando QR');
+  }
+});
+
+// Obtener estadísticas de un QR
+app.get('/admin/qr/:id/stats', verificarAdmin, async (req, res) => {
+  try {
+    const qr = await QR.findById(req.params.id).populate('clienteId', 'nombreLocal');
+    if (!qr) return res.status(404).json({ error: 'QR no encontrado' });
+
+    res.json({
+      codigo: qr.codigo,
+      cliente: qr.clienteId?.nombreLocal || 'Sin asignar',
+      totalScans: qr.scans,
+      ultimoScan: qr.ultimoScan,
+      estado: qr.estado,
+      createdAt: qr.createdAt
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ═════════════════════════════════════════════════════════════════
+// 💳 CHECKOUT CON STRIPE
+// ═════════════════════════════════════════════════════════════════
 app.get('/checkout', (req, res) => {
   const plan = req.query.plan || 'plus';
   const info = PLAN_INFO[plan] || PLAN_INFO.plus;
@@ -478,7 +608,7 @@ app.get('/checkout', (req, res) => {
     <label>Nombre de tu negocio</label>
     <input type="text" id="negocio" placeholder="Ej: Restaurante La Plaza" required>
     <label>Contraseña</label>
-    <input type="password" id="pass" placeholder="Mínimo 6 caracteres" required minlength="6";
+    <input type="password" id="pass" placeholder="Mínimo 6 caracteres" required minlength="6">
     <div class="error" id="error"></div>
     <button type="submit" id="btn">Continuar al pago →</button>
   </form>
@@ -564,9 +694,9 @@ app.get('/pago-exitoso', async (req, res) => {
   }
 });
 
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════
 // 🔔 WEBHOOK DE STRIPE
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════
 
 app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   let event = req.body;
@@ -604,9 +734,9 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
   res.json({ received: true });
 });
 
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════
 // 🚀 INICIAR SERVIDOR
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════
 
 app.listen(PORT, () => {
   console.log('\n🚀 Servidor corriendo en puerto ' + PORT);
