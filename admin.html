@@ -6,178 +6,50 @@
     <title>LynxReview - Panel Admin</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: #333; }
-
-        /* LOGIN */
-        .login-screen {
-            display: flex; justify-content: center; align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-        }
-        .login-box {
-            background: white; padding: 40px; border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.4); width: 100%; max-width: 380px;
-        }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; }
+        .login-screen { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460); }
+        .login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); width: 100%; max-width: 380px; }
         .login-box h1 { color: #667eea; text-align: center; margin-bottom: 8px; font-size: 26px; }
         .login-box p { text-align: center; color: #888; margin-bottom: 30px; font-size: 13px; }
-        .login-box input {
-            width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 8px;
-            font-size: 14px; margin-bottom: 16px;
-        }
+        .login-box input { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 8px; font-size: 14px; margin-bottom: 16px; }
         .login-box input:focus { outline: none; border-color: #667eea; }
-        .login-btn {
-            width: 100%; padding: 12px; background: #667eea; color: white;
-            border: none; border-radius: 8px; font-size: 15px; font-weight: 600;
-            cursor: pointer; transition: background 0.2s;
-        }
-        .login-btn:hover { background: #5568d3; }
-
-        /* MAIN LAYOUT */
+        .login-btn { width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; }
         .main-screen { display: none; min-height: 100vh; }
-        .topbar {
-            background: #1a1a2e; color: white; padding: 0 24px;
-            display: flex; align-items: center; justify-content: space-between;
-            height: 60px; position: sticky; top: 0; z-index: 100;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-        }
+        .topbar { background: #1a1a2e; color: white; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
         .topbar-logo { font-size: 20px; font-weight: 700; color: #667eea; }
         .topbar-actions { display: flex; gap: 10px; align-items: center; }
-        .btn-process-all {
-            background: #667eea; color: white; border: none; padding: 8px 16px;
-            border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;
-            transition: background 0.2s;
-        }
-        .btn-process-all:hover { background: #5568d3; }
-        .btn-logout { background: transparent; color: #aaa; border: 1px solid #444;
-            padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
-        .btn-logout:hover { color: white; border-color: #888; }
-
-        /* STATS */
-        .stats-bar {
-            display: grid; grid-template-columns: repeat(5, 1fr);
-            gap: 16px; padding: 20px 24px; background: white;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        .stat-card {
-            text-align: center; padding: 16px; border-radius: 10px; background: #f9fafb;
-            border: 1px solid #e5e7eb;
-        }
+        .btn-process-all { background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; }
+        .btn-logout { background: transparent; color: #aaa; border: 1px solid #444; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .stats-bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; padding: 20px 24px; background: white; border-bottom: 1px solid #e5e7eb; }
+        .stat-card { text-align: center; padding: 16px; border-radius: 10px; background: #f9fafb; border: 1px solid #e5e7eb; }
         .stat-number { font-size: 28px; font-weight: 700; }
         .stat-label { font-size: 12px; color: #666; margin-top: 4px; }
-        .stat-card.pending .stat-number { color: #f59e0b; }
-        .stat-card.approved .stat-number { color: #10b981; }
-        .stat-card.published .stat-number { color: #3b82f6; }
-        .stat-card.total .stat-number { color: #667eea; }
-        .stat-card.clients .stat-number { color: #8b5cf6; }
-
-        /* TABS */
         .tabs { display: flex; padding: 0 24px; background: white; border-bottom: 2px solid #e5e7eb; }
-        .tab {
-            padding: 14px 24px; cursor: pointer; font-weight: 500; color: #666;
-            border-bottom: 3px solid transparent; margin-bottom: -2px;
-            transition: all 0.2s; font-size: 14px;
-        }
-        .tab:hover { color: #667eea; }
-        .tab.active { color: #667eea; border-bottom-color: #667eea; font-weight: 600; }
-        .badge {
-            display: inline-block; background: #f59e0b; color: white;
-            border-radius: 10px; padding: 1px 7px; font-size: 11px; margin-left: 6px;
-        }
-
-        /* CONTENT */
+        .tab { padding: 14px 24px; cursor: pointer; font-weight: 500; color: #666; border-bottom: 3px solid transparent; }
+        .tab.active { color: #667eea; border-bottom-color: #667eea; }
         .content { padding: 24px; max-width: 1200px; margin: 0 auto; }
         .tab-content { display: none; }
-        .tab-content.active { display: block; }  /* REVIEW CARDS */
-        .review-card {
-            background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.08); border: 1px solid #e5e7eb;
-        }  .review-header {
-            display: flex; justify-content: space-between; align-items: flex-start;
-            margin-bottom: 12px;
-}
-        .review-author {
-            font-weight: 600; color: #1a1a2e; font-size: 15px; margin-bottom: 4px;
-        }
-        .review-text {
-            background: #f9fafb; padding: 12px; border-radius: 8px;
-            font-size: 13px; line-height: 1.5; margin-bottom: 12px; border-left: 3px solid #667eea;
-        }
-        .review-rating {
-            font-size: 12px; color: #666; margin-bottom: 8px;
-        }
-        .stars { color: #f59e0b; margin-right: 4px; }
-
-        /* BUTTONS */
-        .btn-approve, .btn-reject, .btn-publish {
-            border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;
-            font-size: 13px; font-weight: 600; transition: all 0.2s;
-            margin-right: 8px; margin-top: 8px;
-        }
+        .tab-content.active { display: block; }
+        .qr-container { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); border: 1px solid #e5e7eb; margin-bottom: 16px; }
+        .qr-generator { display: grid; grid-template-columns: 1fr 300px; gap: 24px; }
+        .qr-form { display: flex; flex-direction: column; gap: 12px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #333; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 13px; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #667eea; }
+        .btn { border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; }
         .btn-approve { background: #10b981; color: white; }
         .btn-approve:hover { background: #059669; }
-        .btn-reject { background: #ef4444; color: white; }
-        .btn-reject:hover { background: #dc2626; }
-        .btn-publish { background: #3b82f6; color: white; }
-        .btn-publish:hover { background: #2563eb; }
-
-        /* TEXTAREA STYLE */
-        textarea {
-            width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px;
-            font-family: inherit; font-size: 13px; resize: vertical; min-height: 80px;
-        }
-        textarea:focus { outline: none; border-color: #667eea; }
-
-        /* FORM STYLES */
-        .form-group {
-            margin-bottom: 16px;
-        }
-        .form-group label {
-            display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #333;
-        }
-        .form-group input, .form-group select {
-            width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;
-            font-size: 13px;
-        }
-        .form-group input:focus, .form-group select:focus {
-            outline: none; border-color: #667eea;
-        }
-
-        /* QR GENERATOR (FASE 2) */
-        .qr-container {
-            background: white; border-radius: 12px; padding: 20px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.08); border: 1px solid #e5e7eb;
-            margin-bottom: 16px;
-        }
-        .qr-generator {
-            display: grid; grid-template-columns: 1fr 300px; gap: 24px;
-        }
-        .qr-form {
-            display: flex; flex-direction: column; gap: 12px;
-        }
-        .qr-preview {
-            background: #f9fafb; padding: 20px; border-radius: 8px; text-align: center;
-            border: 2px dashed #e5e7eb;
-        }
-        .qr-preview img {
-            max-width: 100%; height: auto;
-        }
-        .qr-list {
-            margin-top: 24px;
-        }
-        .qr-item {
-            background: white; padding: 12px; border-radius: 8px; margin-bottom: 8px;
-            border: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;
-        }
-        .qr-code { font-size: 12px; font-family: monospace; color: #666; }
-        .qr-stats { font-size: 12px; color: #888; margin-top: 4px; }
-        .btn-download, .btn-delete { padding: 4px 8px; font-size: 11px; border: none; border-radius: 4px; cursor: pointer; }
-        .btn-download { background: #3b82f6; color: white; }
-        .btn-delete { background: #ef4444; color: white; }
-
-        /* LOADING & ERRORS */
-        .loading { color: #888; font-style: italic; }
-        .error-msg { background: #fee; color: #c33; padding: 12px; border-radius: 8px; margin-bottom: 16px; }
-        .success-msg { background: #efe; color: #3c3; padding: 12px; border-radius: 8px; margin-bottom: 16px; }
+        .btn-delete { background: #ef4444; color: white; padding: 4px 8px; font-size: 11px; }
+        .qr-preview { background: #f9fafb; padding: 20px; border-radius: 8px; text-align: center; border: 2px dashed #e5e7eb; }
+        .qr-preview img { max-width: 100%; height: auto; }
+        .qr-list { margin-top: 24px; }
+        .qr-item { background: white; padding: 12px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
+        .toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; color: white; font-size: 14px; opacity: 0; transition: opacity 0.3s; z-index: 1000; }
+        .toast.show { opacity: 1; }
+        .toast.success { background: #10b981; }
+        .toast.error { background: #ef4444; }
+        .toast.info { background: #3b82f6; }
     </style>
 </head>
 <body>
@@ -198,33 +70,23 @@
                 <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
         </div>
-
         <div class="stats-bar" id="statsBar"></div>
-
         <div class="tabs">
-            <div class="tab active" onclick="showTab('respuestas')">Respuestas Pendientes <span class="badge" id="badgePending">0</span></div>
+            <div class="tab active" onclick="showTab('respuestas')">Respuestas Pendientes</div>
             <div class="tab" onclick="showTab('historial')">Historial</div>
             <div class="tab" onclick="showTab('clientes')">Clientes</div>
             <div class="tab" onclick="showTab('qr')">📱 QR Generator</div>
         </div>
-
         <div class="content">
-            <!-- TAB: RESPUESTAS PENDIENTES -->
             <div id="respuestas-tab" class="tab-content active">
                 <div id="respuestasContainer"></div>
             </div>
-
-            <!-- TAB: HISTORIAL -->
             <div id="historial-tab" class="tab-content">
                 <div id="historialContainer"></div>
             </div>
-
-            <!-- TAB: CLIENTES -->
             <div id="clientes-tab" class="tab-content">
                 <div id="clientesContainer"></div>
             </div>
-
-            <!-- TAB: QR GENERATOR (FASE 2) -->
             <div id="qr-tab" class="tab-content">
                 <div class="qr-container">
                     <h2>Generador de Códigos QR</h2>
@@ -232,22 +94,22 @@
                         <div class="qr-form">
                             <div class="form-group">
                                 <label>Generar nuevo QR</label>
-                                <button class="btn-approve" onclick="generarNuevoQR()">+ Generar QR</button>
+                                <button class="btn btn-approve" onclick="generarNuevoQR()">+ Generar QR</button>
                             </div>
                             <div class="form-group">
-                                <label>Vincular QR a Cliente</label>
+                                <label>Vincular QR a URL de Google Maps</label>
                                 <select id="qrClienteSelect" onchange="actualizarQR()">
                                     <option value="">Seleccionar QR...</option>
                                 </select>
-                                <input type="text" id="qrUrlDestino" placeholder="URL de Google Maps" />
-                                <button class="btn-approve" onclick="guardarQRClient()" style="margin-top: 8px;">Guardar</button>
+                                <input type="text" id="qrUrlDestino" placeholder="https://maps.app.goo.gl/xxxxx" />
+                                <button class="btn btn-approve" onclick="guardarQRClient()" style="margin-top: 8px;">Guardar URL</button>
                             </div>
                         </div>
                         <div class="qr-preview" id="qrPreview">
-                            <p class="loading">Generando...</p>
+                            <p style="color: #999;">Selecciona un QR para previsualizar</p>
                         </div>
                     </div>
-                    <div class="qr-list" id="qrListContainer">
+                    <div class="qr-list">
                         <h3>Códigos QR Activos</h3>
                         <div id="qrListContent"></div>
                     </div>
@@ -256,8 +118,10 @@
         </div>
     </div>
 
-    <script>        let token = localStorage.getItem('admin_token');
-        const ADMIN_SECRET = token || 'tu-secret-local';
+    <div class="toast" id="toast"></div>
+
+    <script>
+        let token = localStorage.getItem('admin_token');
         const API_BASE = 'https://lynxreview-webhook.onrender.com';
 
         async function doLogin() {
@@ -280,221 +144,277 @@
                 const res = await fetch(`${API_BASE}/admin/stats?secret=${token}`);
                 const data = await res.json();
                 document.getElementById('statsBar').innerHTML = `
-                    <div class="stat-card pending"><div class="stat-number">${data.pendientes}</div><div class="stat-label">Pendientes</div></div>
-                    <div class="stat-card approved"><div class="stat-number">${data.autoAprobadas}</div><div class="stat-label">Aprobadas</div></div>
-                    <div class="stat-card published"><div class="stat-number">${data.publicadas}</div><div class="stat-label">Publicadas</div></div>
-                    <div class="stat-card total"><div class="stat-number">${data.totalResenas}</div><div class="stat-label">Total Reseñas</div></div>
-                    <div class="stat-card clients"><div class="stat-number">${data.totalClientes}</div><div class="stat-label">Clientes</div></div>
+                    <div class="stat-card"><div class="stat-number">${data.pendientes || 0}</div><div class="stat-label">Pendientes</div></div>
+                    <div class="stat-card"><div class="stat-number">${data.autoAprobadas || 0}</div><div class="stat-label">Aprobadas</div></div>
+                    <div class="stat-card"><div class="stat-number">${data.publicadas || 0}</div><div class="stat-label">Publicadas</div></div>
+                    <div class="stat-card"><div class="stat-number">${data.totalResenas || 0}</div><div class="stat-label">Total Reseñas</div></div>
+                    <div class="stat-card"><div class="stat-number">${data.totalClientes || 0}</div><div class="stat-label">Clientes</div></div>
                 `;
-                document.getElementById('badgePending').textContent = data.pendientes;
-            } catch (e) { console.error('Error cargarStats:', e); }
+            } catch(e) { console.error('Error:', e); }
         }
 
         async function cargarRespuestas() {
             try {
                 const res = await fetch(`${API_BASE}/admin/pendientes?secret=${token}`);
                 const respuestas = await res.json();
-                let html = '';
-                for (const {respuesta, resena, cliente} of respuestas) {
-                    html += `
-                        <div class="review-card">
-                            <div class="review-header">
-                                <div><div class="review-author">⭐ ${resena.calificacion} - ${resena.autor}</div>
-                                <div class="review-rating">Local: ${cliente.nombreLocal} | ${new Date(resena.fecha).toLocaleDateString()}</div></div>
-                            </div>
-                            <div class="review-text">${resena.textoResena}</div>
+                document.getElementById('respuestasContainer').innerHTML = respuestas.map(r => `
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e5e7eb;">
+                        <div style="font-weight: 600; margin-bottom: 8px;">⭐ ${r.resena.calificacion} - ${r.resena.autor}</div>
+                        <div style="color: #666; font-size: 13px; margin-bottom: 8px;">Local: ${r.cliente.nombreLocal}</div>
+                        <div style="background: #f9fafb; padding: 12px; border-radius: 6px; margin-bottom: 12px;">${r.resena.textoResena}</div>
+                        <div style="margin-bottom: 12px;">
                             <strong>Respuesta IA:</strong>
-                            <textarea id="resp-${respuesta._id}">${respuesta.respuestaIA}</textarea>
-                            <div>
-                                <button class="btn-approve" onclick="aprobarRespuesta('${respuesta._id}')">✅ Aprobar</button>
-                                <button class="btn-reject" onclick="rechazarRespuesta('${respuesta._id}')">❌ Rechazar</button>
-                            </div>
+                            <textarea id="resp-${r.respuesta._id}" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; margin-top: 6px; min-height: 60px;">${r.respuesta.respuestaIA}</textarea>
                         </div>
-                    `;
-                }
-                document.getElementById('respuestasContainer').innerHTML = html;
-            } catch (e) { console.error('Error cargarRespuestas:', e); }
+                        <button class="btn btn-approve" onclick="aprobarRespuesta('${r.respuesta._id}')">✅ Aprobar</button>
+                        <button class="btn" style="background: #ef4444; color: white; margin-left: 8px;" onclick="rechazarRespuesta('${r.respuesta._id}')">❌ Rechazar</button>
+                    </div>
+                `).join('');
+            } catch(e) { console.error('Error:', e); }
         }
 
-        async function cargarHistorial() {
-            try {
-                const res = await fetch(`${API_BASE}/admin/resenas?secret=${token}`);
-                const resenas = await res.json();
-                let html = '';
-                for (const {resena, respuesta, cliente} of resenas) {
-                    const estado = respuesta?.estado || 'sin_respuesta';
-                    html += `
-                        <div class="review-card">
-                            <div class="review-header">
-                                <div><div class="review-author">⭐ ${resena.calificacion} - ${resena.autor}</div>
-                                <div class="review-rating">Local: ${cliente.nombreLocal} | ${new Date(resena.fecha).toLocaleDateString()}</div>
-                                <div class="review-rating">Estado: ${estado}</div></div>
-                            </div>
-                            <div class="review-text">${resena.textoResena}</div>
-                            ${respuesta ? `<strong>Respuesta:</strong><div class="review-text">${respuesta.respuestaEditada || respuesta.respuestaIA}</div>` : '<p class="loading">Sin respuesta</p>'}
-                        </div>
-                    `;
-                }
-                document.getElementById('historialContainer').innerHTML = html;
-            } catch (e) { console.error('Error cargarHistorial:', e); }
-        }
-
-        async function cargarClientes() {
-            try {
-                const res = await fetch(`${API_BASE}/admin/clientes?secret=${token}`);
-                const clientes = await res.json();
-                let html = '';
-                for (const c of clientes) {
-                    html += `
-                        <div class="review-card">
-                            <strong>${c.nombre}</strong> (${c.email})<br/>
-                            Local: ${c.nombreLocal}<br/>
-                            Google Place ID: ${c.googlePlaceId || 'No configurado'}<br/>
-                            Plan: ${c.planSuscripcion?.tipo || 'Sin plan'} (${c.planSuscripcion?.estado || 'Inactivo'})
-                        </div>
-                    `;
-                }
-                document.getElementById('clientesContainer').innerHTML = html;
-            } catch (e) { console.error('Error cargarClientes:', e); }
-        }
-
-        // QR GENERATOR FUNCTIONS (FASE 2)
         async function generarNuevoQR() {
             try {
-                const res = await fetch(`${API_BASE}/admin/qr/generar`, {
+                const res = await fetch(`${API_BASE}/admin/qr/generar?secret=${token}`, {
                     method: 'POST',
-                    headers: { 'x-admin-secret': token, 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'x-admin-secret': token },
                     body: JSON.stringify({})
                 });
-                const data = await res.json();
-                alert('QR generado: ' + data.qr.codigo);
-                await cargarListaQRs();
-            } catch (e) { alert('Error generando QR: ' + e.message); }
+                if (res.ok) {
+                    showToast('✅ Código QR generado', 'success');
+                    await cargarListaQRs();
+                } else {
+                    showToast('Error al generar QR', 'error');
+                }
+            } catch(e) {
+                showToast('Error: ' + e.message, 'error');
+            }
         }
 
         async function cargarListaQRs() {
             try {
                 const res = await fetch(`${API_BASE}/admin/qrs?secret=${token}`);
                 const qrs = await res.json();
-                let html = '';
-                for (const qr of qrs) {
-                    html += `
+
+                // Actualizar select
+                let selectHtml = '<option value="">Seleccionar QR...</option>';
+                qrs.forEach(qr => {
+                    selectHtml += `<option value="${qr._id}">QR ${qr.codigo}</option>`;
+                });
+                document.getElementById('qrClienteSelect').innerHTML = selectHtml;
+
+                // Actualizar lista
+                let listHtml = '';
+                qrs.forEach(qr => {
+                    listHtml += `
                         <div class="qr-item">
                             <div>
-                                <div class="qr-code">Código: ${qr.codigo}</div>
-                                <div class="qr-stats">Escaneos: ${qr.scans} | Cliente: ${qr.clienteId?.nombreLocal || 'Sin asignar'}</div>
+                                <div style="font-size: 12px; font-weight: 600; margin-bottom: 4px;">Código: ${qr.codigo}</div>
+                                <div style="font-size: 11px; color: #999;">Escaneos: ${qr.scans || 0} | Cliente: ${qr.clienteId?.nombreLocal || 'Sin asignar'}</div>
                             </div>
                             <div>
-                                <button class="btn-download" onclick="descargarQR('${qr._id}')">Descargar</button>
-                                <button class="btn-delete" onclick="eliminarQR('${qr._id}')">Eliminar</button>
+                                <button class="btn btn-delete" onclick="descargarQR('${qr._id}', '${qr.codigo}')">Descargar</button>
+                                <button class="btn btn-delete" style="background: #ef4444; margin-left: 4px;" onclick="eliminarQR('${qr._id}')">Eliminar</button>
                             </div>
                         </div>
                     `;
-                }
-                document.getElementById('qrListContent').innerHTML = html;
-                // Actualizar select de clientes
-                actualizarSelectQRs(qrs);
-            } catch (e) { console.error('Error cargarListaQRs:', e); }
-        }
-
-        function actualizarSelectQRs(qrs) {
-            let html = '<option value="">Seleccionar QR...</option>';
-            for (const qr of qrs) {
-                html += `<option value="${qr._id}">QR ${qr.codigo}</option>`;
+                });
+                document.getElementById('qrListContent').innerHTML = listHtml || '<p style="color: #999;">No hay QRs generados</p>';
+            } catch(e) {
+                console.error('Error:', e);
+                showToast('Error cargando QRs', 'error');
             }
-            document.getElementById('qrClienteSelect').innerHTML = html;
         }
 
         async function actualizarQR() {
             const qrId = document.getElementById('qrClienteSelect').value;
-            if (!qrId) return;
+            if (!qrId) {
+                document.getElementById('qrPreview').innerHTML = '<p style="color: #999;">Selecciona un QR para previsualizar</p>';
+                document.getElementById('qrUrlDestino').value = '';
+                return;
+            }
             try {
                 const res = await fetch(`${API_BASE}/admin/qr/${qrId}?secret=${token}`);
                 const qr = await res.json();
-                document.getElementById('qrPreview').innerHTML = `<img src="${qr.datosQR}" alt="QR" />`;
+                if (qr.datosQR) {
+                    document.getElementById('qrPreview').innerHTML = `<img src="${qr.datosQR}" alt="QR" />`;
+                }
                 document.getElementById('qrUrlDestino').value = qr.urlDestino || '';
-            } catch (e) { console.error('Error actualizarQR:', e); }
+            } catch(e) {
+                console.error('Error:', e);
+            }
         }
 
         async function guardarQRClient() {
             const qrId = document.getElementById('qrClienteSelect').value;
-            const urlDestino = document.getElementById('qrUrlDestino').value;
-            if (!qrId || !urlDestino) { alert('Completa todos los campos'); return; }
-            try {
-                await fetch(`${API_BASE}/admin/qr/${qrId}?secret=${token}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'x-admin-secret': token },
-                    body: JSON.stringify({ urlDestino })
-                });
-                alert('QR actualizado');
-                await cargarListaQRs();
-            } catch (e) { alert('Error guardando QR: ' + e.message); }
+            const urlDestino = document.getElementById('qrUrlDestk="rechazarRespuesta('${r.respuesta._id}')">❌ Rechazar</button>
+                    </div>
+                `).join('');
+            } catch(e) { console.error('Error:', e); }
         }
 
-        async function descargarQR(qrId) {
+        async function generarNuevoQR() {
+            try {
+                const res = await fetch(`${API_BASE}/admin/qr/generar?secret=${token}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-admin-secret': token },
+                    body: JSON.stringify({})
+                });
+                if (res.ok) {
+                    showToast('✅ Código QR generado', 'success');
+                    await cargarListaQRs();
+                } else {
+                    showToast('Error al generar QR', 'error');
+                }
+            } catch(e) {
+                showToast('Error: ' + e.message, 'error');
+            }
+        }
+
+        async function cargarListaQRs() {
+            try {
+                const res = await fetch(`${API_BASE}/admin/qrs?secret=${token}`);
+                const qrs = await res.json();
+
+                // Actualizar select
+                let selectHtml = '<option value="">Seleccionar QR...</option>';
+                qrs.forEach(qr => {
+                    selectHtml += `<option value="${qr._id}">QR ${qr.codigo}</option>`;
+                });
+                document.getElementById('qrClienteSelect').innerHTML = selectHtml;
+
+                // Actualizar lista
+                let listHtml = '';
+                qrs.forEach(qr => {
+                    listHtml += `
+                        <div class="qr-item">
+                            <div>
+                                <div style="font-size: 12px; font-weight: 600; margin-bottom: 4px;">Código: ${qr.codigo}</div>
+                                <div style="font-size: 11px; color: #999;">Escaneos: ${qr.scans || 0} | Cliente: ${qr.clienteId?.nombreLocal || 'Sin asignar'}</div>
+                            </div>
+                            <div>
+                                <button class="btn btn-delete" onclick="descargarQR('${qr._id}', '${qr.codigo}')">Descargar</button>
+                                <button class="btn btn-delete" style="background: #ef4444; margin-left: 4px;" onclick="eliminarQR('${qr._id}')">Eliminar</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                document.getElementById('qrListContent').innerHTML = listHtml || '<p style="color: #999;">No hay QRs generados</p>';
+            } catch(e) {
+                console.error('Error:', e);
+                showToast('Error cargando QRs', 'error');
+            }
+        }
+
+        async function actualizarQR() {
+            const qrId = document.getElementById('qrClienteSelect').value;
+            if (!qrId) {
+                document.getElementById('qrPreview').innerHTML = '<p style="color: #999;">Selecciona un QR para previsualizar</p>';
+                document.getElementById('qrUrlDestino').value = '';
+                return;
+            }
             try {
                 const res = await fetch(`${API_BASE}/admin/qr/${qrId}?secret=${token}`);
                 const qr = await res.json();
-                const link = document.createElement('a');
-                link.href = qr.datosQR;
-                link.download = `QR_${qr.codigo}.png`;
-                link.click();
-            } catch (e) { alert('Error descargando QR: ' + e.message); }
+                if (qr.datosQR) {
+                    document.getElementById('qrPreview').innerHTML = `<img src="${qr.datosQR}" alt="QR" />`;
+                }
+                document.getElementById('qrUrlDestino').value = qr.urlDestino || '';
+            } catch(e) {
+                console.error('Error:', e);
+            }
+        }
+
+        async function guardarQRClient() {
+            const qrId = document.getElementById('qrClienteSelect').value;
+            const urlDestino = document.getElementById('qrUrlDestor descargando QR', 'error');
+            }
         }
 
         async function eliminarQR(qrId) {
             if (!confirm('¿Eliminar este QR?')) return;
             try {
-                await fetch(`${API_BASE}/admin/qr/${qrId}?secret=${token}`, { method: 'DELETE', headers: { 'x-admin-secret': token } });
-                await cargarListaQRs();
-            } catch (e) { alert('Error eliminando QR: ' + e.message); }
+                const res = await fetch(`${API_BASE}/admin/qr/${qrId}?secret=${token}`, {
+                    method: 'DELETE',
+                    headers: { 'x-admin-secret': token }
+                });
+                if (res.ok) {
+                    showToast('✅ QR eliminado', 'success');
+                    cargarListaQRs();
+                } else {
+                    showToast('Error al eliminar', 'error');
+                }
+            } catch(e) {
+                showToast('Error', 'error');
+            }
         }
 
         async function aprobarRespuesta(respuestaId) {
-            const textoFinal = document.getElementById(`resp-${respuestaId}`).value;
+            const texto = document.getElementById(`resp-${respuestaId}`).value;
             try {
-                await fetch(`${API_BASE}/admin/respuesta/${respuestaId}/aprobar?secret=${token}`, {
-                    method: 'PUT', headers: { 'Content-Type': 'application/json', 'x-admin-secret': token },
-                    body: JSON.stringify({ textoFinal })
+                const res = await fetch(`${API_BASE}/admin/respuesta/${respuestaId}/aprobar?secret=${token}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'x-admin-secret': token },
+                    body: JSON.stringify({ textoFinal: texto })
                 });
-                await cargarRespuestas();
-                await cargarStats();
-            } catch (e) { alert('Error aprobando: ' + e.message); }
+                if (res.ok) {
+                    showToast('✅ Respuesta aprobada', 'success');
+                    await Promise.all([cargarStats(), cargarRespuestas()]);
+                }
+            } catch(e) {
+                showToast('Error', 'error');
+            }
         }
 
         async function rechazarRespuesta(respuestaId) {
             const motivo = prompt('Motivo del rechazo:');
             if (!motivo) return;
             try {
-                await fetch(`${API_BASE}/admin/respuesta/${respuestaId}/rechazar?secret=${token}`, {
-                    method: 'PUT', headers: { 'Content-Type': 'application/json', 'x-admin-secret': token },
+                const res = await fetch(`${API_BASE}/admin/respuesta/${respuestaId}/rechazar?secret=${token}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'x-admin-secret': token },
                     body: JSON.stringify({ motivo })
                 });
-                await cargarRespuestas();
-                await cargarStats();
-            } catch (e) { alert('Error rechazando: ' + e.message); }
+                if (res.ok) {
+                    showToast('❌ Respuesta rechazada', 'success');
+                    await Promise.all([cargarStats(), cargarRespuestas()]);
+                }
+            } catch(e) {
+                showToast('Error', 'error');
+            }
         }
 
         async function procesarTodo() {
             try {
-                await fetch(`${API_BASE}/admin/procesar-todo?secret=${token}`, { method: 'POST', headers: { 'x-admin-secret': token } });
-                await cargarRespuestas();
-                await cargarStats();
-            } catch (e) { alert('Error procesando: ' + e.message); }
+                const res = await fetch(`${API_BASE}/admin/procesar-todo?secret=${token}`, {
+                    method: 'POST',
+                    headers: { 'x-admin-secret': token }
+                });
+                if (res.ok) {
+                    showToast('✅ Procesamiento completado', 'success');
+                    await Promise.all([cargarStats(), cargarRespuestas()]);
+                }
+            } catch(e) {
+                showToast('Error', 'error');
+            }
         }
 
         function showTab(tab) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.getElementById(tab + '-tab')?.classList.add('active');
             event.target.classList.add('active');
-            
-            if (tab === 'historial') cargarHistorial();
-            if (tab === 'clientes') cargarClientes();
             if (tab === 'qr') cargarListaQRs();
         }
 
-        // INIT
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => toast.classList.remove('show'), 3500);
+        }
+
+        // Init
         if (!token || token === 'null') {
             document.getElementById('loginScreen').style.display = 'flex';
             document.getElementById('mainScreen').style.display = 'none';
@@ -505,371 +425,5 @@
             cargarRespuestas();
         }
     </script>
-</body>
-</html>       <span class="estado-badge ${estadoBadge.class}">${estadoBadge.label}</span>
-                </div>
-            </div>
-
-            <div class="review-text">"${resena.textoResena || 'Sin texto'}"</div>
-
-            ${respuesta ? `
-            <div class="ai-response-section">
-                <div class="ai-response-label">
-                    🤖 Respuesta IA
-                    ${modoAprobacion ? '<span style="color:#888;font-size:11px;font-weight:400;">— Puedes editar antes de aprobar</span>' : ''}
-                </div>
-                ${modoAprobacion ? `
-                    <textarea class="ai-response-text" id="texto-${respuestaId}">${respuesta.textoRespuesta || ''}</textarea>
-                ` : `
-                    <div class="ai-response-text">${respuesta.textoRespuesta || ''}</div>
-                `}
-            </div>
-
-            <div class="review-actions">
-                ${modoAprobacion ? `
-                    <button class="btn btn-approve" onclick="aprobar('${respuestaId}')">✅ Aprobar</button>
-                    <button class="btn btn-reject" onclick="abrirModalRechazo('${respuestaId}')">❌ Rechazar</button>
-                ` : ''}
-                ${respuesta.estado === 'aprobada' ? `
-                    <button class="btn btn-copy" onclick="copiarRespuesta('${respuestaId}', \`${escapeTemplate(respuesta.textoRespuesta)}\`)">📋 Copiar respuesta</button>
-                    <button class="btn btn-publish" onclick="publicar('${respuestaId}')">🚀 Marcar publicada</button>
-                ` : ''}
-                ${respuesta.estado === 'publicada' ? `
-                    <span style="color:#3b82f6;font-size:13px;">✅ Publicada en Google</span>
-                ` : ''}
-                ${respuesta.estado === 'rechazada' ? `
-                    <span style="color:#ef4444;font-size:13px;">❌ Rechazada: ${respuesta.motivoRechazo || 'sin motivo'}</span>
-                ` : ''}
-            </div>
-            ` : '<p style="color:#aaa;font-size:13px;margin-top:8px;">Sin respuesta generada</p>'}
-        </div>`;
-    }
-
-    function getEstadoBadge(estado) {
-        const map = {
-            'pendiente_aprobacion': { class: 'estado-pendiente', label: '⏳ Pendiente' },
-            'aprobada': { class: 'estado-aprobada', label: '✅ Aprobada' },
-            'rechazada': { class: 'estado-rechazada', label: '❌ Rechazada' },
-            'publicada': { class: 'estado-publicada', label: '🚀 Publicada' },
-        };
-        return map[estado] || { class: 'estado-pendiente', label: estado || 'Sin estado' };
-    }
-
-    function escapeTemplate(str) {
-        return (str || '').replace(/`/g, '\\`').replace(/\${/g, '\\${');
-    }
-
-    // ============ RENDER CLIENTES ============
-    function renderClientes() {
-        const container = document.getElementById('clientesList');
-        if (!clientesData.length) {
-            container.innerHTML = `<div class="empty-state"><div class="icon">👤</div><p>No hay clientes registrados todavía</p></div>`;
-            return;
-        }
-        container.innerHTML = clientesData.map(c => {
-            const planBadge = getPlanBadge(c.plan);
-            const tienePlaceId = !!c.googlePlaceId;
-            return `
-            <div class="client-card">
-                <div class="client-info">
-                    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
-                        <h3>${c.nombreLocal || c.nombre}</h3>
-                        <span class="client-plan ${planBadge.class}">${planBadge.label}</span>
-                        <span style="font-size:11px;color:#888;">
-                            <span class="status-dot ${c.suscripcionActiva ? 'dot-active' : 'dot-inactive'}"></span>
-                            ${c.suscripcionActiva ? 'Activo' : 'Inactivo'}
-                        </span>
-                    </div>
-                    <p>📧 ${c.email}</p>
-                    <p>👤 ${c.nombre}</p>
-                    <p style="color:${tienePlaceId ? '#059669' : '#f59e0b'};">
-                        📍 Place ID: ${tienePlaceId ? c.googlePlaceId : '⚠️ No configurado'}
-                    </p>
-                    <div class="place-id-section">
-                        <input class="place-id-input" id="placeId-${c._id}"
-                            value="${c.googlePlaceId || ''}"
-                            placeholder="ChIJ... (Google Place ID)">
-                        <button class="btn-save-place" onclick="guardarPlaceId('${c._id}')">Guardar</button>
-                    </div>
-                </div>
-                <div style="display:flex;flex-direction:column;gap:8px;">
-                    <button class="btn-process-client"
-                        onclick="procesarCliente('${c._id}', this)"
-                        ${!tienePlaceId ? 'disabled title="Necesitas añadir el Place ID primero"' : ''}>
-                        ${tienePlaceId ? '⚡ Procesar reseñas' : '⚠️ Sin Place ID'}
-                    </button>
-                </div>
-            </div>`;
-        }).join('');
-    }
-
-    function getPlanBadge(plan) {
-        const map = {
-            'basico': { class: 'plan-basico', label: 'Básico' },
-            'plus': { class: 'plan-plus', label: 'Plus' },
-            'premium': { class: 'plan-premium', label: 'Premium' },
-        };
-        return map[plan] || { class: 'plan-ninguno', label: 'Sin plan' };
-    }
-
-    // ============ ACCIONES ============
-    async function aprobar(respuestaId) {
-        const textoEl = document.getElementById(`texto-${respuestaId}`);
-        const textoFinal = textoEl ? textoEl.value : null;
-        try {
-            const body = textoFinal ? { textoFinal } : {};
-            const res = await fetch(`${API_URL}/admin/respuesta/${respuestaId}/aprobar`, {
-                method: 'PUT',
-                headers: headers(),
-                body: JSON.stringify(body)
-            });
-            if (res.ok) {
-                showToast('✅ Respuesta aprobada. ¡Cópiala a Google!', 'success');
-                document.getElementById(`card-${respuestaId}`)?.remove();
-                await Promise.all([cargarStats(), cargarResenas()]);
-                pendientesData = pendientesData.filter(p => p.respuesta?._id !== respuestaId);
-            } else {
-                showToast('Error al aprobar', 'error');
-            }
-        } catch(e) { showToast('Error de conexión', 'error'); }
-    }
-
-    function abrirModalRechazo(id) {
-        rechazarRespuestaId = id;
-        document.getElementById('motivoRechazo').value = '';
-        document.getElementById('modalRechazo').classList.add('active');
-    }
-
-    function cerrarModal() {
-        document.getElementById('modalRechazo').classList.remove('active');
-        rechazarRespuestaId = null;
-    }
-
-    async function confirmarRechazo() {
-        const motivo = document.getElementById('motivoRechazo').value;
-        try {
-            const res = await fetch(`${API_URL}/admin/respuesta/${rechazarRespuestaId}/rechazar`, {
-                method: 'PUT',
-                headers: headers(),
-                body: JSON.stringify({ motivo })
-            });
-            if (res.ok) {
-                showToast('❌ Respuesta rechazada', 'info');
-                document.getElementById(`card-${rechazarRespuestaId}`)?.remove();
-                await Promise.all([cargarStats(), cargarResenas()]);
-                pendientesData = pendientesData.filter(p => p.respuesta?._id !== rechazarRespuestaId);
-            } else {
-                showToast('Error al rechazar', 'error');
-            }
-        } catch(e) { showToast('Error de conexión', 'error'); }
-        cerrarModal();
-    }
-
-    async function publicar(respuestaId) {
-        try {
-            const res = await fetch(`${API_URL}/admin/respuesta/${respuestaId}/publicar`, {
-                method: 'PUT', headers: headers()
-            });
-            if (res.ok) {
-                showToast('🚀 Marcada como publicada', 'success');
-                await Promise.all([cargarStats(), cargarResenas()]);
-            } else {
-                showToast('Error', 'error');
-            }
-        } catch(e) { showToast('Error de conexión', 'error'); }
-    }
-
-    function copiarRespuesta(id, texto) {
-        navigator.clipboard.writeText(texto).then(() => {
-            showToast('📋 ¡Respuesta copiada! Pégala en Google Maps', 'success');
-        });
-    }
-
-    async function guardarPlaceId(clienteId) {
-        const val = document.getElementById(`placeId-${clienteId}`).value.trim();
-        if (!val) { showToast('Ingresa un Place ID válido', 'error'); return; }
-        try {
-            const res = await fetch(`${API_URL}/admin/cliente/${clienteId}/place-id`, {
-                method: 'PUT',
-                headers: headers(),
-                body: JSON.stringify({ placeId: val })
-            });
-            if (res.ok) {
-                showToast('✅ Place ID guardado', 'success');
-                await cargarClientes();
-            } else {
-                showToast('Error al guardar', 'error');
-            }
-        } catch(e) { showToast('Error de conexión', 'error'); }
-    }
-
-    async function procesarCliente(clienteId, btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span> Procesando...';
-        try {
-            const res = await fetch(`${API_URL}/admin/procesar-cliente/${clienteId}`, {
-                method: 'POST', headers: headers()
-            });
-            if (res.ok) {
-                const data = await res.json();
-                showToast(`✅ ${data.nuevas || 0} nuevas reseñas procesadas`, 'success');
-                await cargarTodo();
-            } else {
-                const err = await res.json();
-                showToast('Error: ' + (err.error || 'No se pudo procesar'), 'error');
-            }
-        } catch(e) {
-            showToast('Error de conexión', 'error');
-        }
-        btn.disabled = false;
-        btn.innerHTML = '⚡ Procesar reseñas';
-    }
-
-    async function procesarTodo() {
-        const btn = document.getElementById('btnProcessAll');
-        btn.innerHTML = '<span class="spinner"></span> Procesando...';
-        btn.disabled = true;
-        try {
-            const res = await fetch(`${API_URL}/admin/procesar-todo`, {
-                method: 'POST', headers: headers()
-            });
-            if (res.ok) {
-                const data = await res.json();
-                showToast(`✅ Procesados ${data.clientes || 0} clientes`, 'success');
-                await cargarTodo();
-            } else {
-                showToast('Error al procesar', 'error');
-            }
-        } catch(e) { showToast('Error de conexión', 'error'); }
-        btn.innerHTML = '⚡ Procesar todas las reseñas';
-        btn.disabled = false;
-    }
-
-    // ============ TABS ============
-    function switchTab(tab) {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-        const tabs = ['pendientes','resenas','clientes','qr'];
-        document.querySelectorAll('.tab')[tabs.indexOf(tab)].classList.add('active');
-        document.getElementById(`tab-${tab}`).classList.add('active');
-        if (tab === 'qr') cargarListaQRs();
-    }
-
-    // ============ QR GENERATOR (FASE 2) ============
-    async function generarNuevoQR() {
-        try {
-            const res = await fetch(`${API_URL}/admin/qr/generar`, {
-                method: 'POST',
-                headers: headers()
-            });
-            if (res.ok) {
-                const data = await res.json();
-                showToast('✅ Código QR generado', 'success');
-                await cargarListaQRs();
-            } else {
-                showToast('Error al generar QR', 'error');
-            }
-        } catch(e) {
-            showToast('Error de conexión', 'error');
-        }
-    }
-
-    async function cargarListaQRs() {
-        try {
-            const res = await fetch(`${API_URL}/admin/qrs`, { headers: headers() });
-            const qrs = await res.json();
-            const container = document.getElementById('qrsList');
-
-            if (!Array.isArray(qrs) || qrs.length === 0) {
-                container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #999;">📭 No hay códigos QR generados</div>';
-                return;
-            }
-
-            container.innerHTML = qrs.map(qr => `
-                <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; text-align: center;">
-                    ${qr.datosQR ? `<img src="${qr.datosQR}" style="width: 150px; height: 150px; margin-bottom: 12px;">` : '<div style="width: 150px; height: 150px; background: #f0f0f0; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;">Sin QR</div>'}
-                    <div style="font-size: 12px; color: #666; margin-bottom: 8px;"><strong>${qr.codigo}</strong></div>
-                    <div style="font-size: 11px; color: #999; margin-bottom: 12px;">Scans: ${qr.scans || 0}</div>
-                    <div style="display: flex; gap: 4px; flex-direction: column;">
-                        <button onclick="vincularQRCliente('${qr._id}')" style="width: 100%; padding: 6px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">Vincular cliente</button>
-                        <button onclick="descargarQR('${qr.datosQR}', '${qr.codigo}')" style="width: 100%; padding: 6px; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Descargar</button>
-                        <button onclick="eliminarQR('${qr._id}')" style="width: 100%; padding: 6px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Eliminar</button>
-                    </div>
-                </div>
-            `).join('');
-        } catch(e) {
-            console.error('Error cargando QRs:', e);
-            showToast('Error cargando códigos QR', 'error');
-        }
-    }
-
-    async function vincularQRCliente(qrId) {
-        const clienteId = prompt('Ingresa el ID del cliente:');
-        if (!clienteId) return;
-
-        const urlDestino = prompt('Ingresa la URL de Google Maps del cliente:');
-        if (!urlDestino) return;
-
-        try {
-            const res = await fetch(`${API_URL}/admin/qr/${qrId}`, {
-                method: 'PUT',
-                headers: headers(),
-                body: JSON.stringify({ clienteId, urlDestino })
-            });
-            if (res.ok) {
-                showToast('✅ QR vinculado al cliente', 'success');
-                await cargarListaQRs();
-            } else {
-                showToast('Error al vincular QR', 'error');
-            }
-        } catch(e) {
-            showToast('Error de conexión', 'error');
-        }
-    }
-
-    function descargarQR(dataUrl, codigo) {
-        const link = document.createElement('a');
-        link.href = dataUrl;
-        link.download = `QR_${codigo}.png`;
-        link.click();
-    }
-
-    async function eliminarQR(qrId) {
-        if (!confirm('¿Eliminar este código QR?')) return;
-
-        try {
-            const res = await fetch(`${API_URL}/admin/qr/${qrId}`, {
-                method: 'DELETE',
-                headers: headers()
-            });
-            if (res.ok) {
-                showToast('✅ QR eliminado', 'success');
-                await cargarListaQRs();
-            } else {
-                showToast('Error al eliminar QR', 'error');
-            }
-        } catch(e) {
-            showToast('Error de conexión', 'error');
-        }
-    }
-
-    // ============ TOAST ============
-    function showToast(msg, type = 'success') {
-        const toast = document.getElementById('toast');
-        toast.textContent = msg;
-        toast.className = `toast ${type} show`;
-        setTimeout(() => toast.classList.remove('show'), 3500);
-    }
-
-    // Close modal on overlay click
-    document.getElementById('modalRechazo').addEventListener('click', function(e) {
-        if (e.target === this) cerrarModal();
-    });
-
-    // Auto-refresh stats every 60 seconds
-    setInterval(() => {
-        if (adminToken) cargarStats();
-    }, 60000);
-</script>
 </body>
 </html>
