@@ -922,6 +922,11 @@
                         <div class="stat-number">${data.totalClientes || 0}</div>
                         <div class="stat-label">Clientes</div>
                     </div>
+                    <div class="stat-card" style="border-top-color:#10b981">
+                        <div class="stat-icon">🔗</div>
+                        <div class="stat-number">${data.googleConectados || 0}</div>
+                        <div class="stat-label">Google Conectados</div>
+                    </div>
                 `;
             } catch (e) {
                 console.error('Error cargando estadísticas:', e);
@@ -944,23 +949,33 @@
                     return;
                 }
 
-                document.getElementById('respuestasContainer').innerHTML = respuestas.map(r => `
+                document.getElementById('respuestasContainer').innerHTML = respuestas.map(r => {
+                    const googleConectado = r.cliente?.googleAuth?.conectado;
+                    const tieneReviewName = !!r.resena?.googleReviewName;
+                    const puedeAutoPublicar = googleConectado && tieneReviewName;
+                    const googleBadge = puedeAutoPublicar
+                        ? `<span style="background:#d1fae5;color:#065f46;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:600;margin-left:8px">🔗 Auto-publica en Google</span>`
+                        : googleConectado
+                            ? `<span style="background:#fef3c7;color:#92400e;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:600;margin-left:8px">⚠️ Google conectado (sin review ID)</span>`
+                            : `<span style="background:#f3f4f6;color:#6b7280;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:600;margin-left:8px">📋 Publicación manual</span>`;
+                    return `
                     <div class="respuesta-card">
                         <div class="respuesta-header">
                             <span class="respuesta-author">⭐ ${escapeHtml(r.resena.autor)} <span class="rating">${r.resena.calificacion} estrellas</span></span>
+                            ${googleBadge}
                         </div>
                         <div class="respuesta-local">📍 ${escapeHtml(r.cliente.nombreLocal)}</div>
                         <div class="respuesta-texto">${escapeHtml(r.resena.textoResena)}</div>
                         <div class="respuesta-ia">
-                            <label>💭 Respuesta IA</label>
+                            <label>💭 Respuesta IA ${puedeAutoPublicar ? '— se publicará automáticamente en Google al aprobar' : ''}</label>
                             <textarea id="resp-${r.respuesta._id}">${escapeHtml(r.respuesta.respuestaIA)}</textarea>
                         </div>
                         <div class="respuesta-actions">
-                            <button class="btn-approve" onclick="aprobarRespuesta('${r.respuesta._id}')">✅ Aprobar</button>
+                            <button class="btn-approve" onclick="aprobarRespuesta('${r.respuesta._id}', ${puedeAutoPublicar})">${puedeAutoPublicar ? '✅ Aprobar y Publicar en Google' : '✅ Aprobar'}</button>
                             <button class="btn-reject" onclick="rechazarRespuesta('${r.respuesta._id}')">❌ Rechazar</button>
                         </div>
                     </div>
-                `).join('');
+                `}).join('');
             } catch (e) {
                 console.error('Error cargando respuestas:', e);
                 showToast('❌ Error al cargar respuestas', 'error');
@@ -968,7 +983,7 @@
         }
 
         // ==================== RESPUESTAS ====================
-        async function aprobarRespuesta(respuestaId) {
+        async function aprobarRespuesta(respuestaId, puedeAutoPublicar = false) {
             const texto = document.getElementById(`resp-${respuestaId}`).value;
 
             try {
@@ -979,7 +994,14 @@
                 });
 
                 if (res.ok) {
-                    showToast('✅ Respuesta aprobada correctamente', 'success');
+                    const data = await res.json();
+                    if (data.publicado) {
+                        showToast('🚀 Aprobada y publicada automáticamente en Google', 'success');
+                    } else if (data.errorPublicacion) {
+                        showToast(`✅ Aprobada — ⚠️ Error al publicar en Google: ${data.errorPublicacion}`, 'error');
+                    } else {
+                        showToast('✅ Respuesta aprobada correctamente', 'success');
+                    }
                     await Promise.all([cargarStats(), cargarRespuestas()]);
                 } else {
                     showToast('❌ Error al aprobar respuesta', 'error');
@@ -1026,6 +1048,110 @@
                     await Promise.all([cargarStats(), cargarRespuestas()]);
                 } else {
                     showToast('❌ Error en el procesamiento', 'error');
+                }
+            } catch (e) {
+                showToast('❌ Error de conexión', 'error');
+            }
+        }
+
+        // ==================== CLIENTES ====================
+        async function cargarClientes() {
+            const container = document.getElementById('clientesContainer');
+            container.innerHTML = '<p style="color:#888;padding:20px">Cargando clientes...</p>';
+            try {
+                const res = await fetch(`${API_BASE}/admin/clientes?secret=${token}`);
+                const clientes = await res.json();
+
+                if (!clientes.length) {
+                    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">👥</div><p>No hay clientes registrados aún</p></div>';
+                    return;
+                }
+
+                container.innerHTML = clientes.map(c => {
+                    const conectado = c.googleAuth?.conectado;
+                    const googleEmail = c.googleAuth?.googleEmail || '';
+                    const locationName = c.googleAuth?.locationName || '';
+                    const googleBadge = conectado
+                        ? `<span style="background:#d1fae5;color:#065f46;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:600">🔗 Google Conectado${googleEmail ? ' · ' + googleEmail : ''}</span>`
+                        : `<span style="background:#fee2e2;color:#991b1b;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:600">❌ Sin Google</span>`;
+                    const planBadge = c.planSuscripcion?.estado === 'activo'
+                        ? `<span style="background:#dbeafe;color:#1e40af;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600">${c.planSuscripcion.tipo || 'activo'}</span>`
+                        : `<span style="background:#f3f4f6;color:#6b7280;padding:3px 10px;border-radius:20px;font-size:11px">sin plan</span>`;
+                    return `
+                    <div class="respuesta-card" style="margin-bottom:12px">
+                        <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px">
+                            <div>
+                                <div style="font-weight:700;font-size:16px;margin-bottom:4px">${escapeHtml(c.nombreLocal || c.nombre)}</div>
+                                <div style="font-size:13px;color:#666;margin-bottom:8px">${escapeHtml(c.email)} · ${planBadge}</div>
+                                <div>${googleBadge}</div>
+                                ${locationName ? `<div style="font-size:11px;color:#9ca3af;margin-top:4px">📍 ${escapeHtml(locationName)}</div>` : ''}
+                            </div>
+                            <div style="display:flex;flex-direction:column;gap:8px;min-width:180px">
+                                ${!conectado ? `<button class="btn-approve" style="font-size:12px;padding:8px 14px" onclick="generarLinkSetup('${c._id}')">🔗 Generar Link de Conexión Google</button>` : ''}
+                                ${conectado ? `<button class="btn-reject" style="font-size:12px;padding:8px 14px;background:#fee2e2;color:#991b1b;border:none;border-radius:8px;cursor:pointer" onclick="desconectarGoogle('${c._id}')">🔌 Desconectar Google</button>` : ''}
+                                <button style="font-size:12px;padding:8px 14px;background:#f3f4f6;color:#374151;border:none;border-radius:8px;cursor:pointer" onclick="procesarCliente('${c._id}')">🔄 Sincronizar Reseñas</button>
+                            </div>
+                        </div>
+                    </div>
+                `}).join('');
+            } catch (e) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><p>Error cargando clientes</p></div>';
+                console.error('Error cargando clientes:', e);
+            }
+        }
+
+        async function generarLinkSetup(clienteId) {
+            try {
+                const res = await fetch(`${API_BASE}/admin/cliente/${clienteId}/setup-link?secret=${token}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-admin-secret': token }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    await navigator.clipboard.writeText(data.setupUrl).catch(() => {});
+                    const msg = data.emailEnviado
+                        ? '✅ Link generado y enviado por email al cliente'
+                        : '✅ Link copiado al portapapeles — compártelo con el cliente';
+                    showToast(msg, 'success');
+                    prompt('📋 Link de configuración Google (cópialo):', data.setupUrl);
+                } else {
+                    showToast('❌ Error generando link', 'error');
+                }
+            } catch (e) {
+                showToast('❌ Error de conexión', 'error');
+            }
+        }
+
+        async function desconectarGoogle(clienteId) {
+            if (!confirm('¿Desconectar Google Business de este cliente?')) return;
+            try {
+                const res = await fetch(`${API_BASE}/admin/cliente/${clienteId}/google?secret=${token}`, {
+                    method: 'DELETE',
+                    headers: { 'x-admin-secret': token }
+                });
+                if (res.ok) {
+                    showToast('✅ Google desconectado', 'success');
+                    cargarClientes();
+                } else {
+                    showToast('❌ Error al desconectar', 'error');
+                }
+            } catch (e) {
+                showToast('❌ Error de conexión', 'error');
+            }
+        }
+
+        async function procesarCliente(clienteId) {
+            try {
+                const res = await fetch(`${API_BASE}/admin/procesar-cliente/${clienteId}?secret=${token}`, {
+                    method: 'POST',
+                    headers: { 'x-admin-secret': token }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(`✅ Sincronizado: ${data.nuevas || 0} reseñas nuevas`, 'success');
+                    await Promise.all([cargarStats(), cargarRespuestas()]);
+                } else {
+                    showToast('❌ Error en sincronización: ' + (data.error || ''), 'error');
                 }
             } catch (e) {
                 showToast('❌ Error de conexión', 'error');
@@ -1197,9 +1323,8 @@
             document.getElementById(tabName + '-tab')?.classList.add('active');
             event.target.classList.add('active');
 
-            if (tabName === 'qr') {
-                cargarListaQRs();
-            }
+            if (tabName === 'qr') cargarListaQRs();
+            if (tabName === 'clientes') cargarClientes();
         }
 
         // ==================== INICIALIZACIÓN ====================
@@ -1223,3 +1348,4 @@
     </script>
 </body>
 </html>
+�F�b6�73�'"�6�FR�7FG2#�W66�V�3�G�"�66�2����6ƖV�FS�G�"�6ƖV�FT�C�����'&T��6���u6��6�v�"w���F�c���F�c��F�b6�73�'"֗FV��7F���2#��'WGF��6�73�&'F��6���'F��6����F�v���B"��6Ɩ6��&FW66&v%"�rG�"���G�r�rG�"�6�F�v��r�#�	�:RFW66&v#��'WGF����'WGF��6�73�&'F��6���'F��6����FV�WFR"��6Ɩ6��&VƖ֖�%"�rG�"���G�r�#�	�y���VƖ֖�#��'WGF�����F�c���F�c������rr���Р�F�7V�V�B�vWDV�V�V�D'��B�w$Ɨ7D6��FV�Br����W$�D���Ɨ7D�F�ð��6F6��R���6��6��R�W'&�"�tW'&�#�r�R���ТР�7��2gV�7F���7GVƗ�%"����6��7B$�B�F�7V�V�B�vWDV�V�V�D'��B�w$6ƖV�FU6V�V7Br��f�VS���b�$�B���F�7V�V�B�vWDV�V�V�D'��B�w%&Wf�Wrr����W$�D���s��6V�V66���V�"&&Wf�7VƗ�#���s��F�7V�V�B�vWDV�V�V�D'��B�w%&Wf�Wrr��6�74Ɨ7B�FB�vV�G�r���F�7V�V�B�vWDV�V�V�D'��B�w%W&�FW7F���r��f�VR�rs��&WGW&㰢Р�G'���6��7B&W2�v�BfWF6��G���$4W��F֖��"�G�$�G��6V7&WC�G�F��V�����6��7B"�v�B&W2�6�ₓ����b�"�FF�5"���F�7V�V�B�vWDV�V�V�D'��B�w%&Wf�Wrr����W$�D���Ɩ�r7&3�"G�"�FF�5'�"�C�%""����F�7V�V�B�vWDV�V�V�D'��B�w%&Wf�Wrr��6�74Ɨ7B�&V��fR�vV�G�r���ТF�7V�V�B�vWDV�V�V�D'��B�w%W&�FW7F���r��f�VR�"�W&�FW7F�����rs���6F6��R���6��6��R�W'&�"�tW'&�#�r�R���ТР�7��2gV�7F���wV&F%$6ƖV�B����6��7B$�B�F�7V�V�B�vWDV�V�V�D'��B�w$6ƖV�FU6V�V7Br��f�VS��6��7BW&�FW7F����F�7V�V�B�vWDV�V�V�D'��B�w%W&�FW7F���r��f�VR�G&�҂�����b�$�B���6��uF�7B�~)����6V�V66���V�"&��W&�r�v��f�r���&WGW&㰢Р��b�W&�FW7F�����6��uF�7B�~)������w&W6V�U$�r�v��f�r���&WGW&㰢Р��b�W&�FW7F����7F'G5v�F��v�GGr����6��uF�7B�~)�����U$�FV&R6��V�"6���GG�����GG3���r�v��f�r���&WGW&㰢Р�G'���6��7B&W2�v�BfWF6��G���$4W��F֖��"�G�$�G��6V7&WC�G�F��V������WF��C�uUBr���VFW'3���t6��FV�B�G�Rs�vƖ6F�����6��r��w��F֖��6V7&WBs�F��V����&�G���4���7G&��v�g���W&�FW7F���Ґ�ғ����b�&W2������6��uF�7B�~)�RU$�wV&FF6�'&V7F�V�FRr�w7V66W72r���F�7V�V�B�vWDV�V�V�D'��B�w$6ƖV�FU6V�V7Br��f�VR�rs��F�7V�V�B�vWDV�V�V�D'��B�w%W&�FW7F���r��f�VR�rs��F�7V�V�B�vWDV�V�V�D'��B�w%&Wf�Wrr����W$�D���s��6V�V66���V�"&&Wf�7VƗ�#���s��v�B6&v$Ɨ7F'2�����V�6R��6��uF�7B�~)��W'&�"�wV&F"U$�r�vW'&�"r���Т�6F6��R���6��uF�7B�~)��W'&�"FR6��W��;6�r�vW'&�"r���ТР�7��2gV�7F���FW66&v%"�$�B�6�F�v���G'���6��7B&W2�v�BfWF6��G���$4W��F֖��"�G�$�G��6V7&WC�G�F��V�����6��7B"�v�B&W2�6�ₓ��6��7BƖ��F�7V�V�B�7&VFTV�V�V�B�vr���Ɩ��&Vb�"�FF�5#��Ɩ��F�v���B�%�G�6�F�v����v��Ɩ��6Ɩ6�����6��uF�7B�~)�R"FW66&vF�r�w7V66W72r����6F6��R���6��uF�7B�~)��W'&�"FW66&v�F�"r�vW'&�"r���ТР�7��2gV�7F���VƖ֖�%"�$�B����b�6��f�&҂|+�VƖ֖�"W7FR#�r��&WGW&㰠�G'���6��7B&W2�v�BfWF6��G���$4W��F֖��"�G�$�G��6V7&WC�G�F��V������WF��C�tDT�UDRr���VFW'3��w��F֖��6V7&WBs�F��V�Тғ����b�&W2������6��uF�7B�~)�R"VƖ֖�F�r�w7V66W72r���v�B6&v$Ɨ7F'2�����V�6R��6��uF�7B�~)��W'&�"�VƖ֖�"r�vW'&�"r���Т�6F6��R���6��uF�7B�~)��W'&�"FR6��W��;6�r�vW'&�"r���ТР������������������������dTt4�94��������������������ТgV�7F���6��uF"�WfV�B�F$��R���WfV�B�&WfV�DFVfV�B�����F�7V�V�B�VW'�6V�V7F�$�r�F"�6��FV�Br��f�$V6��B��B�6�74Ɨ7B�&V��fR�v7F�fRr����F�7V�V�B�VW'�6V�V7F�$�r�F"r��f�$V6��B��B�6�74Ɨ7B�&V��fR�v7F�fRr�����F�7V�V�B�vWDV�V�V�D'��B�F$��R�r�F"r���6�74Ɨ7B�FB�v7F�fRr���WfV�B�F&vWB�6�74Ɨ7B�FB�v7F�fRr�����b�F$��R���w"r�6&v$Ɨ7F'2�����b�F$��R���v6ƖV�FW2r�6&v$6ƖV�FW2����Р�������������������������4�ĕ�4�94��������������������Т�b�F��V���F��V����v�V��r���F�7V�V�B�vWDV�V�V�D'��B�v��v��67&VV�r��7G��R�F�7���vf�W�s��F�7V�V�B�vWDV�V�V�D'��B�v���67&VV�r��7G��R�F�7���v���Rs���V�6R��F�7V�V�B�vWDV�V�V�D'��B�v��v��67&VV�r��7G��R�F�7���v���Rs��F�7V�V�B�vWDV�V�V�D'��B�v���67&VV�r��7G��R�F�7���v&��6�s��6&v%7FG2����6&v%&W7VW7F2����Р���&WfV�"VR6�W'&R66�FV�F��V�FR6��6�&��0�v��F�r�FDWfV�DƗ7FV�W"�v&Vf�&WV���Br��R������b�F��V�bbF��V���v�V��r���R�&WfV�DFVfV�B����R�&WGW&�f�VR�rs��Тғ����67&�C���&�G�����F���
