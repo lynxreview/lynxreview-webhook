@@ -3,115 +3,839 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LynxReview - Panel Admin</title>
+    <title>LynxReview - Panel de Administración</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; }
-        .login-screen { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460); }
-        .login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); width: 100%; max-width: 380px; }
-        .login-box h1 { color: #667eea; text-align: center; margin-bottom: 8px; font-size: 26px; }
-        .login-box p { text-align: center; color: #888; margin-bottom: 30px; font-size: 13px; }
-        .login-box input { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 8px; font-size: 14px; margin-bottom: 16px; }
-        .login-box input:focus { outline: none; border-color: #667eea; }
-        .login-btn { width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; }
-        .main-screen { display: none; min-height: 100vh; }
-        .topbar { background: #1a1a2e; color: white; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-        .topbar-logo { font-size: 20px; font-weight: 700; color: #667eea; }
-        .topbar-actions { display: flex; gap: 10px; align-items: center; }
-        .btn-process-all { background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; }
-        .btn-logout { background: transparent; color: #aaa; border: 1px solid #444; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
-        .stats-bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; padding: 20px 24px; background: white; border-bottom: 1px solid #e5e7eb; }
-        .stat-card { text-align: center; padding: 16px; border-radius: 10px; background: #f9fafb; border: 1px solid #e5e7eb; }
-        .stat-number { font-size: 28px; font-weight: 700; }
-        .stat-label { font-size: 12px; color: #666; margin-top: 4px; }
-        .tabs { display: flex; padding: 0 24px; background: white; border-bottom: 2px solid #e5e7eb; }
-        .tab { padding: 14px 24px; cursor: pointer; font-weight: 500; color: #666; border-bottom: 3px solid transparent; }
-        .tab.active { color: #667eea; border-bottom-color: #667eea; }
-        .content { padding: 24px; max-width: 1200px; margin: 0 auto; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .qr-container { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); border: 1px solid #e5e7eb; margin-bottom: 16px; }
-        .qr-generator { display: grid; grid-template-columns: 1fr 300px; gap: 24px; }
-        .qr-form { display: flex; flex-direction: column; gap: 12pz; }
-        .form-group { margin-bottom: 16px; }
-        .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #333; }
-        .form-group input, .form-group select { width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 13px; }
-        .form-group input:focus, .form-group select:focus { outline: none; border-color: #667eea; }
-        .btn { border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; }
-        .btn-approve { background: #10b981; color: white; }
-        .btn-approve:hover { background: #059669; }
-        .btn-delete { background: #ef4444; color: white; padding: 4px 8px; font-size: 11px; }
-        .qr-preview { background: #f9fafb; padding: 20px; border-radius: 8px; text-align: center; border: 2px dashed #e5e7eb; }
-        .qr-preview img { max-width: 100%; height: auto; }
-        .qr-list { margin-top: 24px; }
-        .qr-item { background: white; padding: 12px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
-        .toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; color: white; font-size: 14px; opacity: 0; transition: opacity 0.3s; z-index: 1000; }
-        .toast.show { opacity: 1; }
-        .toast.success { background: #10b981; }
-        .toast.error { background: #ef4444; }
-        .toast.info { background: #3b82f6; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: #f5f7fa;
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+
+        /* ==================== LOGIN SCREEN ==================== */
+        .login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .login-container {
+            background: white;
+            padding: 48px 40px;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 420px;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .login-header h1 {
+            font-size: 32px;
+            color: #667eea;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .login-header p {
+            color: #888;
+            font-size: 14px;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input {
+            padding: 12px 14px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: #f9fafb;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn-login {
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 8px;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ==================== MAIN SCREEN ==================== */
+        .main-screen {
+            display: none;
+            min-height: 100vh;
+            background: #f5f7fa;
+        }
+
+        .topbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 70px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .topbar-logo {
+            font-size: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: -0.5px;
+        }
+
+        .topbar-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn-primary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-primary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            border: none;
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 1);
+        }
+
+        /* ==================== DASHBOARD ==================== */
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .stats-section {
+            margin-bottom: 32px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #667eea;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            border-left: 4px solid #667eea;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .stat-card.pending { border-left-color: #f59e0b; }
+        .stat-card.approved { border-left-color: #10b981; }
+        .stat-card.published { border-left-color: #06b6d4; }
+        .stat-card.total { border-left-color: #8b5cf6; }
+        .stat-card.clients { border-left-color: #ec4899; }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .stat-icon {
+            position: absolute;
+            right: 16px;
+            top: 16px;
+            font-size: 28px;
+            opacity: 0.1;
+        }
+
+        /* ==================== TABS ==================== */
+        .tabs-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+
+        .tabs-header {
+            display: flex;
+            border-bottom: 2px solid #e5e7eb;
+            overflow-x: auto;
+            background: #f9fafb;
+        }
+
+        .tab {
+            padding: 16px 24px;
+            cursor: pointer;
+            font-weight: 500;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .tab:hover {
+            color: #667eea;
+            background: white;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: white;
+        }
+
+        .tabs-content {
+            padding: 24px;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* ==================== RESPUESTAS ==================== */
+        .respuestas-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .respuesta-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #f59e0b;
+            transition: all 0.3s ease;
+        }
+
+        .respuesta-card:hover {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .respuesta-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .respuesta-author {
+            font-weight: 600;
+            color: #1a1a1a;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .rating {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .respuesta-local {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 12px;
+            padding: 8px;
+            background: #f9fafb;
+            border-radius: 6px;
+        }
+
+        .respuesta-texto {
+            background: #f9fafb;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 12px;
+            border-left: 3px solid #667eea;
+        }
+
+        .respuesta-ia {
+            margin-bottom: 16px;
+        }
+
+        .respuesta-ia label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .respuesta-ia textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 80px;
+            transition: all 0.3s ease;
+        }
+
+        .respuesta-ia textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .respuesta-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-approve {
+            background: #10b981;
+            color: white;
+            padding: 8px 14px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-approve:hover {
+            background: #059669;
+            transform: translateY(-1px);
+        }
+
+        .btn-reject {
+            background: #ef4444;
+            color: white;
+            padding: 8px 14px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-reject:hover {
+            background: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        /* ==================== QR GENERATOR ==================== */
+        .qr-generator-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .qr-generator-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .qr-form-section,
+        .qr-preview-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .qr-form-section h3,
+        .qr-preview-section h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn-generate {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-generate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+        }
+
+        .qr-preview {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px dashed #e5e7eb;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qr-preview img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .qr-preview.empty {
+            color: #999;
+        }
+
+        .qr-list-section {
+            margin-top: 24px;
+        }
+
+        .qr-list-section h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .qr-item {
+            background: white;
+            padding: 14px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .qr-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .qr-item-info {
+            flex: 1;
+        }
+
+        .qr-code-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 2px;
+        }
+
+        .qr-code-stats {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .qr-item-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-small {
+            padding: 6px 10px;
+            border: none;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-small-download {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-small-download:hover {
+            background: #2563eb;
+        }
+
+        .btn-small-delete {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-small-delete:hover {
+            background: #dc2626;
+        }
+
+        /* ==================== EMPTY STATES ==================== */
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        /* ==================== TOAST/ALERTS ==================== */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 14px 18px;
+            border-radius: 8px;
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 2000;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: #10b981;
+        }
+
+        .toast.error {
+            background: #ef4444;
+        }
+
+        .toast.info {
+            background: #3b82f6;
+        }
+
+        /* ==================== RESPONSIVE ==================== */
+        @media (max-width: 768px) {
+            .topbar {
+                padding: 0 16px;
+            }
+
+            .dashboard-container {
+                padding: 16px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+
+            .tabs-header {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .tab {
+                padding: 12px 16px;
+                font-size: 13px;
+            }
+
+            .topbar-actions {
+                flex-direction: column;
+                gap: 8px;
+                width: 100%;
+            }
+
+            .btn-primary {
+                width: 100%;
+                padding: 8px 12px;
+            }
+        }
+
+        /* ==================== LOADING STATE ==================== */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- ==================== LOGIN SCREEN ==================== -->
     <div class="login-screen" id="loginScreen">
-        <div class="login-box">
-            <h1>ð LynxReview</h1>
-            <p>Panel de AdministraciÃ³n</p>
-            <input type="password" id="adminPassword" placeholder="ContraseÃ±a Admin" />
-            <button class="login-btn" onclick="doLogin()">Ingresar</button>
+        <div class="login-container">
+            <div class="login-header">
+                <h1>🔍 LynxReview</h1>
+                <p>Panel de Administración</p>
+            </div>
+            <form class="login-form" onsubmit="doLogin(event)">
+                <div class="form-group">
+                    <label for="adminPassword">Contraseña</label>
+                    <input type="password" id="adminPassword" placeholder="Ingresa la contraseña" autocomplete="current-password" required>
+                </div>
+                <button type="submit" class="btn-login">Ingresar</button>
+            </form>
         </div>
     </div>
 
+    <!-- ==================== MAIN SCREEN ==================== -->
     <div class="main-screen" id="mainScreen">
         <div class="topbar">
-            <div class="topbar-logo">ð LynxReview - Admin</div>
+            <div class="topbar-logo">🔍 LynxReview - Admin</div>
             <div class="topbar-actions">
-                <button class="btn-process-all" onclick="procesarTodo()">Procesar Todas las ReseÃ±as</button>
-                <button class="btn-logout" onclick="logout()">Logout</button>
+                <button class="btn-primary" onclick="procesarTodo()">Procesar Todas las Reseñas</button>
+                <button class="btn-primary btn-danger" onclick="logout()">Cerrar Sesión</button>
             </div>
         </div>
-        <div class="stats-bar" id="statsBar"></div>
-        <div class="tabs">
-            <div class="tab active" onclick="showTab('respuestas')">Respuestas Pendientes</div>
-            <div class="tab" onclick="showTab('historial')">Historial</div>
-            <div class="tab" onclick="showTab('clientes')">Clientes</div>
-            <div class="tab" onclick="showTab('qr')">ð± QR Generator</div>
-        </div>
-        <div class="content">
-            <div id="respuestas-tab" class="tab-content active">
-                <div id="respuestasContainer"></div>
+
+        <div class="dashboard-container">
+            <!-- ESTADÍSTICAS -->
+            <div class="stats-section">
+                <div class="section-title">📊 Estadísticas</div>
+                <div class="stats-grid" id="statsBar"></div>
             </div>
-            <div id="historial-tab" class="tab-content">
-                <div id="historialContainer"></div>
-            </div>
-            <div id="clientes-tab" class="tab-content">
-                <div id="clientesContainer"></div>
-            </div>
-            <div id="qr-tab" class="tab-content">
-                <div class="qr-container">
-                    <h2>Generador de CÃ³digos QR</h2>
-                    <div class="qr-generator">
-                        <div class="qr-form">
-                            <div class="form-group">
-                                <label>Generar nuevo QR</label>
-                                <button class="btn btn-approve" onclick="generarNuevoQR()">+ Generar QR</button>
-                            </div>
-                            <div class="form-group">
-                                <label>Vincular QR a URL de Google Maps</label>
-                                <select id="qrClienteSelect" onchange="actualizarQR()">
-                                    <option value="">Seleccionar QR...</option>
-                                </select>
-                                <input type="text" id="qrUrlDestino" placeholder="https://maps.app.goo.gl/xxxxx" />
-                                <button class="btn btn-approve" onclick="guardarQRClient()" style="margin-top: 8px;">Guardar URL</button>
-                            </div>
-                        </div>
-                        <div class="qr-preview" id="qrPreview">
-                            <p style="color: #999;">Selecciona un QR para previsualizar</p>
-                        </div>
+
+            <!-- TABS -->
+            <div class="tabs-container">
+                <div class="tabs-header">
+                    <div class="tab active" onclick="showTab(event, 'respuestas')">📝 Respuestas Pendientes</div>
+                    <div class="tab" onclick="showTab(event, 'historial')">📋 Historial</div>
+                    <div class="tab" onclick="showTab(event, 'clientes')">👥 Clientes</div>
+                    <div class="tab" onclick="showTab(event, 'qr')">📱 Generador QR</div>
+                </div>
+
+                <div class="tabs-content">
+                    <!-- RESPUESTAS PENDIENTES -->
+                    <div id="respuestas-tab" class="tab-content active">
+                        <div id="respuestasContainer"></div>
                     </div>
-                    <div class="qr-list">
-                        <h3>CÃ³digos QR Activos</h3>
-                        <div id="qrListContent"></div>
+
+                    <!-- HISTORIAL -->
+                    <div id="historial-tab" class="tab-content">
+                        <div id="historialContainer"></div>
+                    </div>
+
+                    <!-- CLIENTES -->
+                    <div id="clientes-tab" class="tab-content">
+                        <div id="clientesContainer"></div>
+                    </div>
+
+                    <!-- QR GENERATOR -->
+                    <div id="qr-tab" class="tab-content">
+                        <div class="qr-generator-container">
+                            <div class="qr-form-section">
+                                <h3>⚙️ Controles</h3>
+                                <div class="form-group">
+                                    <label>Generar Nuevo QR</label>
+                                    <button class="btn-generate" onclick="generarNuevoQR()">➕ Generar QR</button>
+                                </div>
+                                <div class="form-group">
+                                    <label for="qrClienteSelect">Seleccionar QR</label>
+                                    <select id="qrClienteSelect" onchange="actualizarQR()">
+                                        <option value="">Selecciona un QR...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="qrUrlDestino">URL de Google Maps</label>
+                                    <input type="text" id="qrUrlDestino" placeholder="https://maps.app.goo.gl/xxxxx" />
+                                </div>
+                                <button class="btn-generate" style="background: #10b981;" onclick="guardarQRClient()">💾 Guardar URL</button>
+                            </div>
+                            <div class="qr-preview-section">
+                                <h3>👁️ Vista Previa</h3>
+                                <div class="qr-preview empty" id="qrPreview">
+                                    <p>Selecciona un QR para previsualizar</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="qr-list-section">
+                            <h3>📦 QRs Activos</h3>
+                            <div id="qrListContent"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -121,58 +845,194 @@
     <div class="toast" id="toast"></div>
 
     <script>
+        // ==================== VARIABLES GLOBALES ====================
         let token = localStorage.getItem('admin_token');
         const API_BASE = 'https://lynxreview-webhook.onrender.com';
 
-        async function doLogin() {
+        // ==================== UTILIDADES ====================
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => toast.classList.remove('show'), 3500);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ==================== AUTENTICACIÓN ====================
+        async function doLogin(event) {
+            event.preventDefault();
             const pass = document.getElementById('adminPassword').value;
+
+            if (!pass) {
+                showToast('❌ Por favor ingresa la contraseña', 'error');
+                return;
+            }
+
             token = pass;
             localStorage.setItem('admin_token', pass);
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('mainScreen').style.display = 'block';
-            await cargarStats();
-            await cargarRespuestas();
+
+            showToast('✅ Sesión iniciada correctamente', 'success');
+
+            await Promise.all([cargarStats(), cargarRespuestas()]);
         }
 
         function logout() {
-            localStorage.removeItem('admin_token');
-            location.reload();
+            if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                localStorage.removeItem('admin_token');
+                location.reload();
+            }
         }
 
+        // ==================== CARGA DE DATOS ====================
         async function cargarStats() {
             try {
                 const res = await fetch(`${API_BASE}/admin/stats?secret=${token}`);
                 const data = await res.json();
+
                 document.getElementById('statsBar').innerHTML = `
-                    <div class="stat-card"><div class="stat-number">${data.pendientes || 0}</div><div class="stat-label">Pendientes</div></div>
-                    <div class="stat-card"><div class="stat-number">${data.autoAprobadas || 0}</div><div class="stat-label">Aprobadas</div></div>
-                    <div class="stat-card"><div class="stat-number">${data.publicadas || 0}</div><div class="stat-label">Publicadas</div></div>
-                    <div class="stat-card"><div class="stat-number">${data.totalResenas || 0}</div><div class="stat-label">Total ReseÃ±as</div></div>
-                    <div class="stat-card"><div class="stat-number">${data.totalClientes || 0}</div><div class="stat-label">Clientes</div></div>
+                    <div class="stat-card pending">
+                        <div class="stat-icon">⏳</div>
+                        <div class="stat-number">${data.pendientes || 0}</div>
+                        <div class="stat-label">Pendientes</div>
+                    </div>
+                    <div class="stat-card approved">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-number">${data.autoAprobadas || 0}</div>
+                        <div class="stat-label">Aprobadas</div>
+                    </div>
+                    <div class="stat-card published">
+                        <div class="stat-icon">📢</div>
+                        <div class="stat-number">${data.publicadas || 0}</div>
+                        <div class="stat-label">Publicadas</div>
+                    </div>
+                    <div class="stat-card total">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-number">${data.totalResenas || 0}</div>
+                        <div class="stat-label">Total Reseñas</div>
+                    </div>
+                    <div class="stat-card clients">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-number">${data.totalClientes || 0}</div>
+                        <div class="stat-label">Clientes</div>
+                    </div>
                 `;
-            } catch(e) { console.error('Error:', e); }
+            } catch (e) {
+                console.error('Error cargando estadísticas:', e);
+                showToast('❌ Error al cargar estadísticas', 'error');
+            }
         }
 
         async function cargarRespuestas() {
             try {
                 const res = await fetch(`${API_BASE}/admin/pendientes?secret=${token}`);
                 const respuestas = await res.json();
-                document.getElementById('respuestasContainer').innerHTML = respuestas.map(r => `
-                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e5e7eb;">
-                        <div style="font-weight: 600; margin-bottom: 8px;">â­ ${r.resena.calificacion} - ${r.resena.autor}</div>
-                        <div style="color: #666; font-size: 13px; margin-bottom: 8px;">Local: ${r.cliente.nombreLocal}</div>
-                        <div style="background: #f9fafb; padding: 12px; border-radius: 6px; margin-bottom: 12px;">${r.resena.textoResena}</div>
-                        <div style="margin-bottom: 12px;">
-                            <strong>Respuesta IA:</strong>
-                            <textarea id="resp-${r.respuesta._id}" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; margin-top: 6px; min-height: 60px;">${r.respuesta.respuestaIA}</textarea>
+
+                if (!respuestas.length) {
+                    document.getElementById('respuestasContainer').innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">✨</div>
+                            <p>No hay respuestas pendientes. ¡Excelente trabajo!</p>
                         </div>
-                        <button class="btn btn-approve" onclick="aprobarRespuesta('${r.respuesta._id}')">â Aprobar</button>
-                        <button class="btn" style="background: #ef4444; color: white; margin-left: 8px;" onclick="rechazarRespuesta('${r.respuesta._id}')">â Rechazar</button>
+                    `;
+                    return;
+                }
+
+                document.getElementById('respuestasContainer').innerHTML = respuestas.map(r => `
+                    <div class="respuesta-card">
+                        <div class="respuesta-header">
+                            <span class="respuesta-author">⭐ ${escapeHtml(r.resena.autor)} <span class="rating">${r.resena.calificacion} estrellas</span></span>
+                        </div>
+                        <div class="respuesta-local">📍 ${escapeHtml(r.cliente.nombreLocal)}</div>
+                        <div class="respuesta-texto">${escapeHtml(r.resena.textoResena)}</div>
+                        <div class="respuesta-ia">
+                            <label>💭 Respuesta IA</label>
+                            <textarea id="resp-${r.respuesta._id}">${escapeHtml(r.respuesta.respuestaIA)}</textarea>
+                        </div>
+                        <div class="respuesta-actions">
+                            <button class="btn-approve" onclick="aprobarRespuesta('${r.respuesta._id}')">✅ Aprobar</button>
+                            <button class="btn-reject" onclick="rechazarRespuesta('${r.respuesta._id}')">❌ Rechazar</button>
+                        </div>
                     </div>
                 `).join('');
-            } catch(e) { console.error('Error:', e); }
+            } catch (e) {
+                console.error('Error cargando respuestas:', e);
+                showToast('❌ Error al cargar respuestas', 'error');
+            }
         }
 
+        // ==================== RESPUESTAS ====================
+        async function aprobarRespuesta(respuestaId) {
+            const texto = document.getElementById(`resp-${respuestaId}`).value;
+
+            try {
+                const res = await fetch(`${API_BASE}/admin/respuesta/${respuestaId}/aprobar?secret=${token}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'x-admin-secret': token },
+                    body: JSON.stringify({ textoFinal: texto })
+                });
+
+                if (res.ok) {
+                    showToast('✅ Respuesta aprobada correctamente', 'success');
+                    await Promise.all([cargarStats(), cargarRespuestas()]);
+                } else {
+                    showToast('❌ Error al aprobar respuesta', 'error');
+                }
+            } catch (e) {
+                showToast('❌ Error de conexión', 'error');
+                console.error(e);
+            }
+        }
+
+        async function rechazarRespuesta(respuestaId) {
+            const motivo = prompt('¿Por qué rechazas esta respuesta?');
+            if (!motivo) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/admin/respuesta/${respuestaId}/rechazar?secret=${token}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'x-admin-secret': token },
+                    body: JSON.stringify({ motivo })
+                });
+
+                if (res.ok) {
+                    showToast('❌ Respuesta rechazada', 'success');
+                    await Promise.all([cargarStats(), cargarRespuestas()]);
+                } else {
+                    showToast('❌ Error al rechazar respuesta', 'error');
+                }
+            } catch (e) {
+                showToast('❌ Error de conexión', 'error');
+            }
+        }
+
+        async function procesarTodo() {
+            if (!confirm('¿Procesar todas las respuestas pendientes?')) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/admin/procesar-todo?secret=${token}`, {
+                    method: 'POST',
+                    headers: { 'x-admin-secret': token }
+                });
+
+                if (res.ok) {
+                    showToast('✅ Procesamiento completado', 'success');
+                    await Promise.all([cargarStats(), cargarRespuestas()]);
+                } else {
+                    showToast('❌ Error en el procesamiento', 'error');
+                }
+            } catch (e) {
+                showToast('❌ Error de conexión', 'error');
+            }
+        }
+
+        // ==================== QR GENERATOR ====================
         async function generarNuevoQR() {
             try {
                 const res = await fetch(`${API_BASE}/admin/qr/generar?secret=${token}`, {
@@ -180,14 +1040,15 @@
                     headers: { 'Content-Type': 'application/json', 'x-admin-secret': token },
                     body: JSON.stringify({})
                 });
+
                 if (res.ok) {
-                    showToast('â CÃ³digo QR generado', 'success');
+                    showToast('✅ QR generado exitosamente', 'success');
                     await cargarListaQRs();
                 } else {
-                    showToast('Error al generar QR', 'error');
+                    showToast('❌ Error al generar QR', 'error');
                 }
-            } catch(e) {
-                showToast('Error: ' + e.message, 'error');
+            } catch (e) {
+                showToast('❌ Error de conexión', 'error');
             }
         }
 
@@ -196,51 +1057,55 @@
                 const res = await fetch(`${API_BASE}/admin/qrs?secret=${token}`);
                 const qrs = await res.json();
 
-                // Actualizar select
-                let selectHtml = '<option value="">Seleccionar QR...</option>';
+                let selectHtml = '<option value="">Selecciona un QR...</option>';
                 qrs.forEach(qr => {
                     selectHtml += `<option value="${qr._id}">QR ${qr.codigo}</option>`;
                 });
                 document.getElementById('qrClienteSelect').innerHTML = selectHtml;
 
-                // Actualizar lista
                 let listHtml = '';
-                qrs.forEach(qr => {
-                    listHtml += `
+                if (qrs.length === 0) {
+                    listHtml = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>No hay QRs generados aún</p></div>';
+                } else {
+                    listHtml = qrs.map(qr => `
                         <div class="qr-item">
-                            <div>
-                                <div style="font-size: 12px; font-weight: 600; margin-bottom: 4px;">CÃ³digo: ${qr.codigo}</div>
-                                <div style="font-size: 11px; color: #999;">Escaneos: ${qr.scans || 0} | Cliente: ${qr.clienteId?.nombreLocal || 'Sin asignar'}</div>
+                            <div class="qr-item-info">
+                                <div class="qr-code-label">Código: ${escapeHtml(qr.codigo)}</div>
+                                <div class="qr-code-stats">Escaneos: ${qr.scans || 0} | Cliente: ${qr.clienteId?.nombreLocal || 'Sin asignar'}</div>
                             </div>
-                            <div>
-                                <button class="btn btn-delete" onclick="descargarQR('${qr._id}', '${qr.codigo}')">Descargar</button>
-                                <button class="btn btn-delete" style="background: #ef4444; margin-left: 4px;" onclick="eliminarQR('${qr._id}')">Eliminar</button>
+                            <div class="qr-item-actions">
+                                <button class="btn-small btn-small-download" onclick="descargarQR('${qr._id}', '${qr.codigo}')">📥 Descargar</button>
+                                <button class="btn-small btn-small-delete" onclick="eliminarQR('${qr._id}')">🗑️ Eliminar</button>
                             </div>
                         </div>
-                    `;
-                });
-                document.getElementById('qrListContent').innerHTML = listHtml || '<p style="color: #999;">No hay QRs generados</p>';
-            } catch(e) {
+                    `).join('');
+                }
+
+                document.getElementById('qrListContent').innerHTML = listHtml;
+            } catch (e) {
                 console.error('Error:', e);
-                showToast('Error cargando QRs', 'error');
             }
         }
 
         async function actualizarQR() {
             const qrId = document.getElementById('qrClienteSelect').value;
             if (!qrId) {
-                document.getElementById('qrPreview').innerHTML = '<p style="color: #999;">Selecciona un QR para previsualizar</p>';
+                document.getElementById('qrPreview').innerHTML = '<p>Selecciona un QR para previsualizar</p>';
+                document.getElementById('qrPreview').classList.add('empty');
                 document.getElementById('qrUrlDestino').value = '';
                 return;
             }
+
             try {
                 const res = await fetch(`${API_BASE}/admin/qr/${qrId}?secret=${token}`);
                 const qr = await res.json();
+
                 if (qr.datosQR) {
                     document.getElementById('qrPreview').innerHTML = `<img src="${qr.datosQR}" alt="QR" />`;
+                    document.getElementById('qrPreview').classList.remove('empty');
                 }
                 document.getElementById('qrUrlDestino').value = qr.urlDestino || '';
-            } catch(e) {
+            } catch (e) {
                 console.error('Error:', e);
             }
         }
@@ -248,107 +1113,43 @@
         async function guardarQRClient() {
             const qrId = document.getElementById('qrClienteSelect').value;
             const urlDestino = document.getElementById('qrUrlDestino').value.trim();
-            const guardarBtn = document.querySelector('button[onclick="guardarQRClient()"]');
 
-            // VALIDACIONES
             if (!qrId) {
-                showToast('â ï¸ Por favor selecciona un QR', 'info');
+                showToast('⚠️ Selecciona un QR primero', 'info');
                 return;
             }
 
             if (!urlDestino) {
-                showToast('â ï¸ Por favor ingresa una URL de Google Maps', 'info');
+                showToast('⚠️ Ingresa una URL', 'info');
                 return;
             }
 
             if (!urlDestino.startsWith('http')) {
-                showToast('â ï¸ La URL debe comenzar con http:// o https://', 'info');
+                showToast('⚠️ La URL debe comenzar con http:// o https://', 'info');
                 return;
             }
-
-            if (!token) {
-                showToast('â Error de autenticaciÃ³n. Vuelve a iniciar sesiÃ³n', 'error');
-                return;
-            }
-
-            // MOSTRAR INDICADOR DE CARGA
-            guardarBtn.disabled = true;
-            const textoOriginal = guardarBtn.textContent;
-            guardarBtn.textContent = 'â³ Guardando...';
-            guardarBtn.style.opacity = '0.6';
 
             try {
-                console.log(`[GUARDAR QR] Enviando solicitud a ${API_BASE}/admin/qr/${qrId}`);
-                console.log(`[GUARDAR QR] URL: ${urlDestino}`);
-                console.log(`[GUARDAR QR] ContraseÃ±a: ${token}`);
-                console.log(`[GUARDAR QR] Header x-admin-secret enviado: ${token}`);
-
                 const res = await fetch(`${API_BASE}/admin/qr/${qrId}?secret=${token}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
                         'x-admin-secret': token
                     },
-                    body: JSON.stringify({
-                        urlDestino: urlDestino
-                    })
+                    body: JSON.stringify({ urlDestino })
                 });
 
-                console.log(`[GUARDAR QR] Status: ${res.status} ${res.statusText}`);
-                const responseText = await res.text();
-                console.log(`[GUARDAR QR] Respuesta completa: ${responseText}`);
-
                 if (res.ok) {
-                    let data;
-                    try {
-                        data = JSON.parse(responseText);
-                    } catch(e) {
-                        data = { mensaje: responseText };
-                    }
-                    console.log('â QR guardado exitosamente:', data);
-
-                    // MOSTRAR ÃXITO INMEDIATAMENTE
-                    showToast('â URL guardada INMEDIATAMENTE en la base de datos', 'success');
-
-                    // LIMPIAR FORMULARIO INMEDIATAMENTE (SIN ESPERAR)
+                    showToast('✅ URL guardada correctamente', 'success');
                     document.getElementById('qrClienteSelect').value = '';
                     document.getElementById('qrUrlDestino').value = '';
-                    document.getElementById('qrPreview').innerHTML = '<p style="color: #999;">Selecciona un QR para previsualizar</p>';
-
-                    // RECARGAR LISTA EN BACKGROUND (sin bloquear UI)
-                    cargarListaQRs().catch(e => console.error('Error recargando lista:', e));
+                    document.getElementById('qrPreview').innerHTML = '<p>Selecciona un QR para previsualizar</p>';
+                    await cargarListaQRs();
                 } else {
-                    let error;
-                    try {
-                        error = JSON.parse(responseText);
-                    } catch(e) {
-                        error = { error: responseText || 'Error desconocido' };
-                    }
-                    console.error('â Error del servidor:', error);
-
-                    // Mensaje de error mejorado
-                    let errorMsg = error.error || error.mensaje || 'No se pudo guardar';
-
-                    if (res.status === 403) {
-                        errorMsg = 'ð Error de autenticaciÃ³n - La contraseÃ±a es incorrecta';
-                        console.error('â ï¸ PROBLEMA: El x-admin-secret no coincide con ADMIN_SECRET en el servidor');
-                    } else if (res.status === 404) {
-                        errorMsg = 'â QR no encontrado en la base de datos';
-                    } else if (res.status === 500) {
-                        errorMsg = 'â ï¸ Error del servidor - ' + errorMsg;
-                    }
-
-                    showToast(errorMsg, 'error');
+                    showToast('❌ Error al guardar URL', 'error');
                 }
-            } catch(e) {
-                console.error('â Error de conexiÃ³n:', e);
-                console.error('Stack:', e.stack);
-                showToast('â Error de conexiÃ³n: ' + e.message, 'error');
-            } finally {
-                // RESTAURAR BOTÃN
-                guardarBtn.disabled = false;
-                guardarBtn.textContent = textoOriginal;
-                guardarBtn.style.opacity = '1';
+            } catch (e) {
+                showToast('❌ Error de conexión', 'error');
             }
         }
 
@@ -360,95 +1161,48 @@
                 link.href = qr.datosQR;
                 link.download = `QR_${codigo}.png`;
                 link.click();
-            } catch(e) {
-                showToast('Error descargando QR', 'error');
+                showToast('✅ QR descargado', 'success');
+            } catch (e) {
+                showToast('❌ Error descargando QR', 'error');
             }
         }
 
         async function eliminarQR(qrId) {
-            if (!confirm('wELiminar este QR?')) return;
+            if (!confirm('¿Eliminar este QR?')) return;
+
             try {
                 const res = await fetch(`${API_BASE}/admin/qr/${qrId}?secret=${token}`, {
                     method: 'DELETE',
                     headers: { 'x-admin-secret': token }
                 });
+
                 if (res.ok) {
-                    showToast('â QR eliminado', 'success');
-                    cargarListaQRs();
+                    showToast('✅ QR eliminado', 'success');
+                    await cargarListaQRs();
                 } else {
-                    showToast('Error al eliminar', 'error');
+                    showToast('❌ Error al eliminar', 'error');
                 }
-            } catch(e) {
-                showToast('Error', 'error');
+            } catch (e) {
+                showToast('❌ Error de conexión', 'error');
             }
         }
 
-        async function aprobarRespuesta(respuestaId) {
-            const texto = document.getElementById(`resp-${respuestaId}`).value;
-            try {
-                const res = await fetch(`${API_BASE}/admin/respuesta/${respuestaId}/aprobar?secret=${token}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'x-admin-secret': token },
-                    body: JSON.stringify({ textoFinal: texto })
-                });
-                if (res.ok) {
-                    showToast('â Respuesta aprobada', 'success');
-                    await Promise.all([cargarStats(), cargarRespuestas()]);
-                }
-            } catch(e) {
-                showToast('Error', 'error');
-            }
-        }
+        // ==================== NAVEGACIÓN ====================
+        function showTab(event, tabName) {
+            event.preventDefault();
 
-        async function rechazarRespuesta(respuestaId) {
-            const motivo = prompt('Motivo del rechazo:');
-            if (!motivo) return;
-            try {
-                const res = await fetch(`${API_BASE}/admin/respuesta/${respuestaId}/rechazar?secret=${token}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'x-admin-secret': token },
-                    body: JSON.stringify({ motivo })
-                });
-                if (res.ok) {
-                    showToast('â Respuesta rechazada', 'success');
-                    await Promise.all([cargarStats(), cargarRespuestas()]);
-                }
-            } catch(e) {
-                showToast('Error', 'error');
-            }
-        }
-
-        async function procesarTodo() {
-            try {
-                const res = await fetch(`${API_BASE}/admin/procesar-todo?secret=${token}`, {
-                    method: 'POST',
-                    headers: { 'x-admin-secret': token }
-                });
-                if (res.ok) {
-                    showToast('â Procesamiento completado', 'success');
-                    await Promise.all([cargarStats(), cargarRespuestas()]);
-                }
-            } catch(e) {
-                showToast('Error', 'error');
-            }
-        }
-
-        function showTab(tab) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.getElementById(tab + '-tab')?.classList.add('active');
+
+            document.getElementById(tabName + '-tab')?.classList.add('active');
             event.target.classList.add('active');
-            if (tab === 'qr') cargarListaQRs();
+
+            if (tabName === 'qr') {
+                cargarListaQRs();
+            }
         }
 
-        function showToast(msg, type = 'success') {
-            const toast = document.getElementById('toast');
-            toast.textContent = msg;
-            toast.className = `toast ${type} show`;
-            setTimeout(() => toast.classList.remove('show'), 3500);
-        }
-
-        // Init
+        // ==================== INICIALIZACIÓN ====================
         if (!token || token === 'null') {
             document.getElementById('loginScreen').style.display = 'flex';
             document.getElementById('mainScreen').style.display = 'none';
@@ -458,6 +1212,14 @@
             cargarStats();
             cargarRespuestas();
         }
+
+        // Prevenir que cierre accidentalmente con cambios
+        window.addEventListener('beforeunload', (e) => {
+            if (token && token !== 'null') {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
     </script>
 </body>
 </html>
