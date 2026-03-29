@@ -1,12 +1,14 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const path = require('path');
-const OpenAI = require('openai');
-const QRCode = require('qrcode');
+const express    = require('express');
+const mongoose   = require('mongoose');
+const bcrypt     = require('bcryptjs');
+const jwt        = require('jsonwebtoken');
+const path       = require('path');
+const OpenAI     = require('openai');
+const QRCode     = require('qrcode');
 const nodemailer = require('nodemailer');
 const PDFDocument = require('pdfkit');
+const { google } = require('googleapis');
+const cron       = require('node-cron');
 require('dotenv').config();
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
@@ -25,11 +27,14 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-const PORT = process.env.PORT || 3000;
-const MONGODB_URI = process.env.MONGODB_URI;
+const PORT                 = process.env.PORT || 3000;
+const MONGODB_URI          = process.env.MONGODB_URI;
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
-const JWT_SECRET = process.env.JWT_SECRET || 'tu-clave-secreta-jwt-cambiar';
-const FRONTEND_URL = process.env.FRONTEND_URL || 'https://lynxreview-webhook.onrender.com';
+const JWT_SECRET           = process.env.JWT_SECRET || 'tu-clave-secreta-jwt-cambiar';
+const FRONTEND_URL         = process.env.FRONTEND_URL || 'https://lynxreview-webhook.onrender.com';
+const GOOGLE_CLIENT_ID     = process.env.GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const GOOGLE_REDIRECT_URI  = `${FRONTEND_URL}/auth/google/callback`;
 
 const STRIPE_PRICES = {
   basico:  process.env.STRIPE_PRICE_BASICO,
@@ -43,42 +48,56 @@ const PLAN_INFO = {
   premium: { nombre: 'Plan Premium',  precio: '59 €/mes', color: '#F5A623' }
 };
 
-// ═════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // 📊 ESQUEMAS DE MONGODB
-// ═════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 
 const clienteSchema = new mongoose.Schema({
-  nombre: String,
-  email: { type: String, unique: true },
-  contrasena: String,
-  nombreLocal: String,
-  direccion: String,
+  nombre:        String,
+  email:         { type: String, unique: true },
+  contrasena:    String,
+  nombreLocal:   String,
+  direccion:     String,
   googlePlaceId: String,
+
+  // 🔑 Tokens de Google Business Profile (OAuth)
+  googleAuth: {
+    conectado:    { type: Boolean, default: false },
+    refreshToken: String,
+    accessToken:  String,
+    tokenExpiry:  Date,
+    accountName:  String,   // ej: accounts/123456789
+    locationName: String,   // ej: accounts/123456789/locations/987654321
+    googleEmail:  String
+  },
+
   planSuscripcion: {
-    tipo: String,
-    estado: String,
-    fechaInicio: Date,
-    fechaFin: Date,
+    tipo:                String,
+    estado:              String,
+    fechaInicio:         Date,
+    fechaFin:            Date,
     stripeSubscriptionId: String
   },
   createdAt: { type: Date, default: Date.now }
 });
 
 const resenaSchema = new mongoose.Schema({
-  clienteId: mongoose.Schema.Types.ObjectId,
-  textoResena: String,
-  calificacion: Number,
-  autor: String,
-  fecha: Date,
-  fuente: { type: String, default: 'google_maps' },
+  clienteId:       mongoose.Schema.Types.ObjectId,
+  textoResena:     String,
+  calificacion:    Number,
+  autor:           String,
+  fecha:           Date,
+  fuente:          { type: String, default: 'google_maps' },
   resenaIdExterno: { type: String, unique: true },
-  detectadoEn: { type: Date, default: Date.now }
+  detectadoEn:     { type: Date, default: Date.now },
+  // Nombre de recurso de la reseña en Google Business Profile API (para poder responder)
+  googleReviewName: String
 });
 
 const respuestaSchema = new mongoose.Schema({
-  resenaId: mongoose.Schema.Types.ObjectId,
-  clienteId: mongoose.Schema.Types.ObjectId,
-  respuestaIA: String,
+  resenaId:        mongoose.Schema.Types.ObjectId,
+  clienteId:       mongoose.Schema.Types.ObjectId,
+  respuestaIA:     String,
   respuestaEditada: String,
   estado: {
     type: String,
@@ -86,27 +105,26 @@ const respuestaSchema = new mongoose.Schema({
     default: 'pendiente_aprobacion'
   },
   motivoRechazo: String,
-  publicadoEn: { fuente: String, fecha: Date },
-  createdAt: { type: Date, default: Date.now }
+  publicadoEn:   { fuente: String, fecha: Date },
+  createdAt:     { type: Date, default: Date.now }
 });
 
-// Schema para códigos QR (FASE 2)
 const qrSchema = new mongoose.Schema({
-  codigo: { type: String, unique: true, required: true },
-  clienteId: mongoose.Schema.Types.ObjectId,
+  codigo:     { type: String, unique: true, required: true },
+  clienteId:  mongoose.Schema.Types.ObjectId,
   urlDestino: String,
-  datosQR: String,
-  scans: { type: Number, default: 0 },
+  datosQR:    String,
+  scans:      { type: Number, default: 0 },
   ultimoScan: Date,
-  estado: { type: String, enum: ['activo', 'inactivo'], default: 'activo' },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  estado:     { type: String, enum: ['activo', 'inactivo'], default: 'activo' },
+  createdAt:  { type: Date, default: Date.now },
+  updatedAt:  { type: Date, default: Date.now }
 });
 
-const Cliente  = mongoose.model('Cliente',   clienteSchema);
-const Resena   = mongoose.model('Resena',    resenaSchema);
+const Cliente   = mongoose.model('Cliente',   clienteSchema);
+const Resena    = mongoose.model('Resena',    resenaSchema);
 const Respuesta = mongoose.model('Respuesta', respuestaSchema);
-const QR = mongoose.model('QR', qrSchema);
+const QR        = mongoose.model('QR',        qrSchema);
 
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
@@ -117,9 +135,9 @@ mongoose.connect(MONGODB_URI, {
   console.error('❌ Error conectando a MongoDB:', err);
 });
 
-// ═════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // 🔐 MIDDLEWARES
-// ═════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 
 const verificarToken = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
@@ -141,9 +159,88 @@ const verificarAdmin = (req, res, next) => {
   next();
 };
 
-// ═════════════════════════════════════════════════════════════════
-// 🤖 LÓGICA IA + GOOGLE PLACES
-// ═════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// 🔗 GOOGLE BUSINESS PROFILE — OAUTH Y API
+// ═══════════════════════════════════════════════════════════════
+
+function crearOAuth2Client(tokens = null) {
+  const oauth2 = new google.auth.OAuth2(
+    GOOGLE_CLIENT_ID,
+    GOOGLE_CLIENT_SECRET,
+    GOOGLE_REDIRECT_URI
+  );
+  if (tokens) oauth2.setCredentials(tokens);
+  return oauth2;
+}
+
+async function obtenerAccessTokenFresco(cliente) {
+  const oauth2 = crearOAuth2Client({ refresh_token: cliente.googleAuth.refreshToken });
+  try {
+    const { credentials } = await oauth2.refreshAccessToken();
+    // Persistir el nuevo access token
+    await Cliente.findByIdAndUpdate(cliente._id, {
+      'googleAuth.accessToken': credentials.access_token,
+      'googleAuth.tokenExpiry': new Date(credentials.expiry_date)
+    });
+    return credentials.access_token;
+  } catch (err) {
+    console.error(`[GOOGLE AUTH] Error refrescando token para ${cliente.nombreLocal}:`, err.message);
+    // Marcar como desconectado si el token es inválido
+    if (err.message?.includes('invalid_grant')) {
+      await Cliente.findByIdAndUpdate(cliente._id, { 'googleAuth.conectado': false });
+    }
+    throw err;
+  }
+}
+
+async function obtenerResenasBusinessAPI(cliente) {
+  const accessToken = await obtenerAccessTokenFresco(cliente);
+  const locationName = cliente.googleAuth.locationName;
+  const url = `https://mybusiness.googleapis.com/v4/${locationName}/reviews?pageSize=50`;
+  const response = await fetch(url, {
+    headers: { 'Authorization': `Bearer ${accessToken}` }
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error('Business API: ' + JSON.stringify(data.error));
+  return data.reviews || [];
+}
+
+// Convertir estrellas de texto (API Business) a número
+function starRatingToNumber(starRating) {
+  const map = { FIVE: 5, FOUR: 4, THREE: 3, TWO: 2, ONE: 1 };
+  return map[starRating] || 3;
+}
+
+async function publicarRespuestaGoogle(cliente, googleReviewName, textoRespuesta) {
+  if (!cliente.googleAuth?.conectado || !cliente.googleAuth?.refreshToken) {
+    return { ok: false, error: 'Cliente no conectado a Google Business' };
+  }
+  try {
+    const accessToken = await obtenerAccessTokenFresco(cliente);
+    const url = `https://mybusiness.googleapis.com/v4/${googleReviewName}/reply`;
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ comment: textoRespuesta })
+    });
+    if (!response.ok) {
+      const err = await response.json();
+      console.error('[GOOGLE PUBLISH] Error:', JSON.stringify(err));
+      return { ok: false, error: err.error?.message || 'Error publicando en Google' };
+    }
+    return { ok: true };
+  } catch (err) {
+    console.error('[GOOGLE PUBLISH] Exception:', err.message);
+    return { ok: false, error: err.message };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🤖 LÓGICA IA + GOOGLE
+// ═══════════════════════════════════════════════════════════════
 
 async function obtenerResenasGoogle(placeId) {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
@@ -178,48 +275,107 @@ async function generarRespuestaIA(textoResena, calificacion, nombreLocal) {
 }
 
 async function procesarResenasCliente(cliente) {
-  if (!cliente.googlePlaceId) return { nuevas: 0, error: 'Sin Google Place ID' };
+  const tieneOAuth   = cliente.googleAuth?.conectado && cliente.googleAuth?.locationName;
+  const tienePlaceId = !!cliente.googlePlaceId;
 
-  let resenasGoogle;
-  try {
-    resenasGoogle = await obtenerResenasGoogle(cliente.googlePlaceId);
-  } catch (err) {
-    return { nuevas: 0, error: err.message };
+  if (!tieneOAuth && !tienePlaceId) {
+    return { nuevas: 0, error: 'Sin configuración de Google' };
+  }
+
+  let resenasNormalizadas = [];
+  let modoAPI = false;
+
+  // ── Intentar primero con Business Profile API (OAuth) ──
+  if (tieneOAuth) {
+    try {
+      const rawReviews = await obtenerResenasBusinessAPI(cliente);
+      resenasNormalizadas = rawReviews.map(r => ({
+        text:             r.comment || '',
+        rating:           starRatingToNumber(r.starRating),
+        author_name:      r.reviewer?.displayName || 'Anónimo',
+        time:             Math.floor(new Date(r.createTime).getTime() / 1000),
+        googleReviewName: r.name  // ej: accounts/xxx/locations/xxx/reviews/xxx
+      }));
+      modoAPI = true;
+      console.log(`[SYNC] ${cliente.nombreLocal}: usando Business Profile API (${resenasNormalizadas.length} reseñas)`);
+    } catch (err) {
+      console.error(`[SYNC] ${cliente.nombreLocal}: error Business API, fallback a Places API:`, err.message);
+    }
+  }
+
+  // ── Fallback a Google Places API (sólo lectura) ──
+  if (!modoAPI && tienePlaceId) {
+    try {
+      const rawReviews = await obtenerResenasGoogle(cliente.googlePlaceId);
+      resenasNormalizadas = rawReviews.map(r => ({
+        text:             r.text || '',
+        rating:           r.rating,
+        author_name:      r.author_name,
+        time:             r.time,
+        googleReviewName: null
+      }));
+      console.log(`[SYNC] ${cliente.nombreLocal}: usando Places API (${resenasNormalizadas.length} reseñas)`);
+    } catch (err) {
+      return { nuevas: 0, error: err.message };
+    }
   }
 
   let nuevas = 0;
-  for (const r of resenasGoogle) {
+  for (const r of resenasNormalizadas) {
     const externalId = `${cliente._id}_${r.time}`;
+    const existe = await Resena.findOne({ resenaIdExterno: externalId });
 
-    const existe = await Resena.findOne({ resenaIdExterno: externalId     });    if (existe) continue;
+    if (existe) {
+      // Actualizar googleReviewName si ahora disponemos de él
+      if (r.googleReviewName && !existe.googleReviewName) {
+        await Resena.findByIdAndUpdate(existe._id, { googleReviewName: r.googleReviewName });
+      }
+      continue;
+    }
 
-    // Guardar reseña
     const resena = new Resena({
-      clienteId: cliente._id,
-      textoResena: r.text || '(Sin texto)',
-      calificacion: r.rating,
-      autor: r.author_name,
-      fecha: new Date(r.time * 1000),
-      fuente: 'google_maps',
-      resenaIdExterno: externalId
+      clienteId:        cliente._id,
+      textoResena:      r.text || '(Sin texto)',
+      calificacion:     r.rating,
+      autor:            r.author_name,
+      fecha:            new Date(r.time * 1000),
+      fuente:           'google_maps',
+      resenaIdExterno:  externalId,
+      googleReviewName: r.googleReviewName || null
     });
     await resena.save();
 
-    // Generar respuesta IA
+    // Generar respuesta con IA
     let textoIA = '';
     try {
       textoIA = await generarRespuestaIA(r.text || 'Reseña sin texto', r.rating, cliente.nombreLocal);
     } catch (err) {
-      console.error('OpenAI error:', err.message);
-      textoIA = `Gracias por tu reseña de ${r.rating} estrellas. Valoramos mucho tu opinión en ${cliente.nombreLocal}.`;
+      console.error('[IA] Error generando respuesta:', err.message);
+      textoIA = `Gracias por tu reseña. Valoramos mucho tu opinión en ${cliente.nombreLocal}.`;
     }
 
-    // 5 estrellas → aprobada automáticamente | <5 → pendiente de aprobación por Xavier
+    // 5★ → aprobada automáticamente; <5★ → pendiente aprobación Xavier
+    let estadoInicial = r.rating === 5 ? 'aprobada' : 'pendiente_aprobacion';
+    let publicadoAuto = false;
+
+    // Si tiene OAuth y es 5★, publicar directamente en Google
+    if (modoAPI && r.rating === 5 && r.googleReviewName) {
+      const resultado = await publicarRespuestaGoogle(cliente, r.googleReviewName, textoIA);
+      if (resultado.ok) {
+        estadoInicial = 'publicada';
+        publicadoAuto = true;
+        console.log(`[AUTO-PUBLISH] 5★ publicada automáticamente en Google para ${cliente.nombreLocal}`);
+      }
+    }
+
     const respuesta = new Respuesta({
-      resenaId: resena._id,
-      clienteId: cliente._id,
+      resenaId:    resena._id,
+      clienteId:   cliente._id,
       respuestaIA: textoIA,
-      estado: r.rating === 5 ? 'aprobada' : 'pendiente_aprobacion'
+      estado:      estadoInicial,
+      ...(publicadoAuto ? {
+        publicadoEn: { fuente: 'google_api_auto', fecha: new Date() }
+      } : {})
     });
     await respuesta.save();
     nuevas++;
@@ -228,14 +384,17 @@ async function procesarResenasCliente(cliente) {
   return { nuevas };
 }
 
-// ═════════════════════════════════════════════════════════════════
-// 📄 SERVIR ARCHIVOS HTML
-// ═════════════════════════════════════════════════════════════════
-
+// ═══════════════════════════════════════════════════════════════
+// 🏥 HEALTH CHECK
+// ═══════════════════════════════════════════════════════════════
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// ═══════════════════════════════════════════════════════════════
+// 📄 SERVIR ARCHIVOS HTML
+// ═══════════════════════════════════════════════════════════════
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'dashboard-standalone.html'));
@@ -253,9 +412,187 @@ app.get('/admin.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-// ═════════════════════════════════════════════════════════════════
+// Página de setup de Google para el cliente
+app.get('/setup', (req, res) => {
+  res.sendFile(path.join(__dirname, 'setup.html'));
+});
+
+// ═══════════════════════════════════════════════════════════════
+// 🔗 GOOGLE BUSINESS PROFILE — RUTAS OAUTH
+// ═══════════════════════════════════════════════════════════════
+
+// Iniciar flujo OAuth — el token de setup va en ?token=xxx
+app.get('/auth/google', (req, res) => {
+  const { token } = req.query;
+  if (!token) return res.status(400).send('Token de setup requerido');
+
+  // Verificar que el token de setup es válido
+  try {
+    jwt.verify(token, JWT_SECRET);
+  } catch (e) {
+    return res.status(400).send('Token inválido o expirado. Solicita un nuevo link.');
+  }
+
+  const oauth2 = crearOAuth2Client();
+  const authUrl = oauth2.generateAuthUrl({
+    access_type: 'offline',
+    scope: [
+      'https://www.googleapis.com/auth/business.manage',
+      'https://www.googleapis.com/auth/userinfo.email'
+    ],
+    state: token,       // lo recuperamos en el callback
+    prompt: 'consent'   // forzar para siempre recibir refresh_token
+  });
+
+  res.redirect(authUrl);
+});
+
+// Callback de Google OAuth
+app.get('/auth/google/callback', async (req, res) => {
+  const { code, state: setupToken, error } = req.query;
+
+  if (error) {
+    return res.send(htmlSetupResult(false, 'Autenticación cancelada. Vuelve al link de setup y prueba de nuevo.'));
+  }
+
+  if (!code || !setupToken) {
+    return res.send(htmlSetupResult(false, 'Parámetros inválidos en el callback.'));
+  }
+
+  // Verificar token y extraer clienteId
+  let clienteId;
+  try {
+    const decoded = jwt.verify(setupToken, JWT_SECRET);
+    clienteId = decoded.clienteId;
+    if (!clienteId || decoded.purpose !== 'google_setup') throw new Error('Token de propósito incorrecto');
+  } catch (e) {
+    return res.send(htmlSetupResult(false, 'Token de setup inválido o expirado.'));
+  }
+
+  try {
+    const oauth2 = crearOAuth2Client();
+    const { tokens } = await oauth2.getToken(code);
+    oauth2.setCredentials(tokens);
+
+    // Obtener cuentas de Google Business
+    let accountName = '';
+    let locationName = '';
+    let googleEmail = '';
+
+    try {
+      // Obtener email del usuario
+      const oauth2Api = google.oauth2({ version: 'v2', auth: oauth2 });
+      const userInfo = await oauth2Api.userinfo.get();
+      googleEmail = userInfo.data.email || '';
+
+      // Listar cuentas de Google Business
+      const accountsRes = await fetch('https://mybusinessaccountmanagement.googleapis.com/v1/accounts', {
+        headers: { 'Authorization': `Bearer ${tokens.access_token}` }
+      });
+      const accountsData = await accountsRes.json();
+      const firstAccount = accountsData.accounts?.[0];
+
+      if (firstAccount) {
+        accountName = firstAccount.name;
+
+        // Listar localizaciones
+        const locationsRes = await fetch(`https://mybusiness.googleapis.com/v4/${accountName}/locations?pageSize=10`, {
+          headers: { 'Authorization': `Bearer ${tokens.access_token}` }
+        });
+        const locationsData = await locationsRes.json();
+        const firstLocation = locationsData.locations?.[0];
+        if (firstLocation) locationName = firstLocation.name;
+      }
+    } catch (apiErr) {
+      console.error('[OAUTH CALLBACK] Error obteniendo cuenta/location:', apiErr.message);
+      // Continuar aunque no podamos obtener el account — se puede configurar manualmente
+    }
+
+    // Guardar tokens y datos en MongoDB
+    await Cliente.findByIdAndUpdate(clienteId, {
+      'googleAuth.conectado':    true,
+      'googleAuth.refreshToken': tokens.refresh_token,
+      'googleAuth.accessToken':  tokens.access_token,
+      'googleAuth.tokenExpiry':  tokens.expiry_date ? new Date(tokens.expiry_date) : null,
+      'googleAuth.accountName':  accountName,
+      'googleAuth.locationName': locationName,
+      'googleAuth.googleEmail':  googleEmail
+    });
+
+    const cliente = await Cliente.findById(clienteId).select('nombreLocal');
+    console.log(`[OAUTH] ✅ Google conectado para: ${cliente?.nombreLocal} (${googleEmail})`);
+
+    return res.send(htmlSetupResult(true, null, cliente?.nombreLocal, googleEmail));
+
+  } catch (err) {
+    console.error('[OAUTH CALLBACK] Error:', err.message);
+    return res.send(htmlSetupResult(false, 'Error al procesar la autenticación: ' + err.message));
+  }
+});
+
+function htmlSetupResult(success, errorMsg, nombreLocal = '', email = '') {
+  if (success) {
+    return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LynxReview - Conexión exitosa</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Segoe UI',sans-serif; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+    .card { background:white; border-radius:16px; padding:48px 40px; max-width:460px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,0.2); text-align:center; }
+    .icon { font-size:64px; margin-bottom:20px; }
+    h1 { color:#1a1a2e; font-size:24px; margin-bottom:12px; }
+    p { color:#666; line-height:1.6; margin-bottom:8px; }
+    .badge { display:inline-block; background:#d1fae5; color:#065f46; border-radius:50px; padding:6px 18px; font-size:13px; font-weight:600; margin:16px 0; }
+    .note { font-size:13px; color:#999; margin-top:20px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">🎉</div>
+    <h1>¡Google Business conectado!</h1>
+    <div class="badge">✅ ${nombreLocal || 'Tu negocio'}</div>
+    <p>Tu perfil de Google Business ha sido vinculado correctamente con LynxReview.</p>
+    <p>A partir de ahora gestionaremos y responderemos tus reseñas <strong>automáticamente</strong>.</p>
+    ${email ? `<p class="note">Cuenta Google: ${email}</p>` : ''}
+    <p class="note">Puedes cerrar esta ventana.</p>
+  </div>
+</body>
+</html>`;
+  } else {
+    return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LynxReview - Error</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Segoe UI',sans-serif; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+    .card { background:white; border-radius:16px; padding:48px 40px; max-width:460px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,0.2); text-align:center; }
+    .icon { font-size:64px; margin-bottom:20px; }
+    h1 { color:#1a1a2e; font-size:22px; margin-bottom:12px; }
+    p { color:#666; line-height:1.6; }
+    .error { background:#fee2e2; color:#991b1b; border-radius:8px; padding:12px 16px; margin:16px 0; font-size:14px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">❌</div>
+    <h1>Error al conectar Google</h1>
+    <div class="error">${errorMsg}</div>
+    <p>Por favor contacta a LynxReview para recibir un nuevo link de configuración.</p>
+  </div>
+</body>
+</html>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
 // 👤 AUTENTICACIÓN
-// ═════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 
 app.post('/auth/signup', async (req, res) => {
   try {
@@ -294,19 +631,26 @@ app.post('/auth/login', async (req, res) => {
     res.json({
       mensaje: '✅ Login exitoso',
       token,
-      cliente: { id: cliente._id, nombre: cliente.nombre, email: cliente.email, nombreLocal: cliente.nombreLocal, googlePlaceId: cliente.googlePlaceId }
+      cliente: {
+        id: cliente._id,
+        nombre: cliente.nombre,
+        email: cliente.email,
+        nombreLocal: cliente.nombreLocal,
+        googlePlaceId: cliente.googlePlaceId,
+        googleConectado: cliente.googleAuth?.conectado || false
+      }
     });
   } catch (error) {
     res.status(500).json({ error: 'Error en el login' });
   }
 });
 
-// ═════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // 📊 RUTAS CLIENTE (PROTEGIDAS)
-// ═════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 
 app.get('/cliente/perfil', verificarToken, async (req, res) => {
-  const cliente = await Cliente.findById(req.clienteId).select('-contrasena');
+  const cliente = await Cliente.findById(req.clienteId).select('-contrasena -googleAuth.refreshToken -googleAuth.accessToken');
   res.json(cliente);
 });
 
@@ -316,7 +660,6 @@ app.put('/cliente/perfil', verificarToken, async (req, res) => {
   res.json({ mensaje: '✅ Perfil actualizado', cliente });
 });
 
-// Reseñas del cliente con sus respuestas
 app.get('/cliente/resenas', verificarToken, async (req, res) => {
   const resenas = await Resena.find({ clienteId: req.clienteId }).sort({ fecha: -1 });
   const result = await Promise.all(resenas.map(async (r) => {
@@ -326,52 +669,47 @@ app.get('/cliente/resenas', verificarToken, async (req, res) => {
   res.json(result);
 });
 
-// Configurar Google Place ID
 app.put('/cliente/google-place-id', verificarToken, async (req, res) => {
   const { googlePlaceId } = req.body;
   await Cliente.findByIdAndUpdate(req.clienteId, { googlePlaceId });
   res.json({ mensaje: '✅ Google Place ID guardado' });
 });
 
-// Disparar búsqueda de reseñas (manual)
 app.post('/cliente/procesar-resenas', verificarToken, async (req, res) => {
   const cliente = await Cliente.findById(req.clienteId);
   const resultado = await procesarResenasCliente(cliente);
   res.json({ mensaje: '✅ Proceso completado', ...resultado });
 });
 
-// Respuestas pendientes del cliente
 app.get('/cliente/respuestas/pendientes', verificarToken, async (req, res) => {
   const respuestas = await Respuesta.find({ clienteId: req.clienteId, estado: 'pendiente_aprobacion' }).sort({ createdAt: -1 });
   res.json(respuestas);
 });
 
-// ═════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // 🛡️ PANEL ADMIN (XAVIER)
-// ═════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 
-// Stats generales
 app.get('/admin/stats', verificarAdmin, async (req, res) => {
-  const totalClientes  = await Cliente.countDocuments({ 'planSuscripcion.estado': 'activo' });
+  const totalClientes = await Cliente.countDocuments({ 'planSuscripcion.estado': 'activo' });
+  const googleConectados = await Cliente.countDocuments({ 'googleAuth.conectado': true });
   const totalResenas   = await Resena.countDocuments();
   const pendientes     = await Respuesta.countDocuments({ estado: 'pendiente_aprobacion' });
   const autoAprobadas  = await Respuesta.countDocuments({ estado: 'aprobada' });
   const publicadas     = await Respuesta.countDocuments({ estado: 'publicada' });
-  res.json({ totalClientes, totalResenas, pendientes, autoAprobadas, publicadas });
+  res.json({ totalClientes, googleConectados, totalResenas, pendientes, autoAprobadas, publicadas });
 });
 
-// Todas las respuestas pendientes con datos de reseña y cliente
 app.get('/admin/pendientes', verificarAdmin, async (req, res) => {
   const respuestas = await Respuesta.find({ estado: 'pendiente_aprobacion' }).sort({ createdAt: -1 });
   const result = await Promise.all(respuestas.map(async (r) => {
     const resena  = await Resena.findById(r.resenaId);
-    const cliente = await Cliente.findById(r.clienteId).select('nombre nombreLocal email googlePlaceId planSuscripcion');
+    const cliente = await Cliente.findById(r.clienteId).select('nombre nombreLocal email googlePlaceId planSuscripcion googleAuth.conectado googleAuth.locationName');
     return { respuesta: r, resena, cliente };
   }));
   res.json(result);
 });
 
-// Todas las reseñas (admin)
 app.get('/admin/resenas', verificarAdmin, async (req, res) => {
   const { clienteId } = req.query;
   const filtro = clienteId ? { clienteId } : {};
@@ -384,22 +722,52 @@ app.get('/admin/resenas', verificarAdmin, async (req, res) => {
   res.json(result);
 });
 
-// Listar todos los clientes
 app.get('/admin/clientes', verificarAdmin, async (req, res) => {
-  const clientes = await Cliente.find({}).select('-contrasena').sort({ createdAt: -1 });
+  const clientes = await Cliente.find({}).select('-contrasena -googleAuth.refreshToken -googleAuth.accessToken').sort({ createdAt: -1 });
   res.json(clientes);
 });
 
-// Aprobar respuesta (con posible edición del texto)
+// Aprobar respuesta — si el cliente tiene Google conectado, publicar automáticamente
 app.put('/admin/respuesta/:id/aprobar', verificarAdmin, async (req, res) => {
   const { textoFinal } = req.body;
+
+  const respuesta = await Respuesta.findById(req.params.id);
+  if (!respuesta) return res.status(404).json({ error: 'Respuesta no encontrada' });
+
+  const resena  = await Resena.findById(respuesta.resenaId);
+  const cliente = await Cliente.findById(respuesta.clienteId);
+
   const update = { estado: 'aprobada' };
   if (textoFinal) update.respuestaEditada = textoFinal;
-  const respuesta = await Respuesta.findByIdAndUpdate(req.params.id, update, { new: true });
-  res.json({ mensaje: '✅ Respuesta aprobada', respuesta });
+
+  let publicado = false;
+  let errorPublicacion = null;
+
+  // Intentar auto-publicar si el cliente tiene Google conectado
+  if (cliente?.googleAuth?.conectado && resena?.googleReviewName) {
+    const texto = textoFinal || respuesta.respuestaIA;
+    const resultado = await publicarRespuestaGoogle(cliente, resena.googleReviewName, texto);
+    if (resultado.ok) {
+      update.estado = 'publicada';
+      update['publicadoEn.fecha'] = new Date();
+      update['publicadoEn.fuente'] = 'google_api';
+      publicado = true;
+      console.log(`[ADMIN APPROVE] Publicado en Google para ${cliente.nombreLocal}`);
+    } else {
+      errorPublicacion = resultado.error;
+      console.error(`[ADMIN APPROVE] Error publicando: ${errorPublicacion}`);
+    }
+  }
+
+  const respuestaActualizada = await Respuesta.findByIdAndUpdate(req.params.id, update, { new: true });
+  res.json({
+    mensaje: publicado ? '✅ Aprobada y publicada en Google' : '✅ Respuesta aprobada',
+    respuesta: respuestaActualizada,
+    publicado,
+    errorPublicacion
+  });
 });
 
-// Rechazar respuesta
 app.put('/admin/respuesta/:id/rechazar', verificarAdmin, async (req, res) => {
   const { motivo } = req.body;
   const respuesta = await Respuesta.findByIdAndUpdate(
@@ -410,26 +778,118 @@ app.put('/admin/respuesta/:id/rechazar', verificarAdmin, async (req, res) => {
   res.json({ mensaje: '✅ Respuesta rechazada', respuesta });
 });
 
-// Marcar como publicada en Google (después de copiar/pegar)
 app.put('/admin/respuesta/:id/publicar', verificarAdmin, async (req, res) => {
-  const respuesta = await Respuesta.findByIdAndUpdate(
+  const respuesta = await Respuesta.findById(req.params.id);
+  if (!respuesta) return res.status(404).json({ error: 'No encontrada' });
+
+  const resena  = await Resena.findById(respuesta.resenaId);
+  const cliente = await Cliente.findById(respuesta.clienteId);
+
+  let publicadoGoogle = false;
+  let errorGoogle = null;
+
+  // Intentar publicar via API si disponible
+  if (cliente?.googleAuth?.conectado && resena?.googleReviewName) {
+    const texto = respuesta.respuestaEditada || respuesta.respuestaIA;
+    const resultado = await publicarRespuestaGoogle(cliente, resena.googleReviewName, texto);
+    if (resultado.ok) publicadoGoogle = true;
+    else errorGoogle = resultado.error;
+  }
+
+  const updated = await Respuesta.findByIdAndUpdate(
     req.params.id,
-    { estado: 'publicada', 'publicadoEn.fecha': new Date(), 'publicadoEn.fuente': 'google_maps' },
+    { estado: 'publicada', 'publicadoEn.fecha': new Date(), 'publicadoEn.fuente': publicadoGoogle ? 'google_api' : 'manual' },
     { new: true }
   );
-  res.json({ mensaje: '✅ Marcada como publicada', respuesta });
+  res.json({ mensaje: '✅ Marcada como publicada', respuesta: updated, publicadoGoogle, errorGoogle });
 });
 
-// Establecer Google Place ID a un cliente (admin)
 app.put('/admin/cliente/:clienteId/place-id', verificarAdmin, async (req, res) => {
   const { googlePlaceId } = req.body;
   await Cliente.findByIdAndUpdate(req.params.clienteId, { googlePlaceId });
   res.json({ mensaje: '✅ Place ID actualizado' });
 });
 
-// Procesar reseñas de TODOS los clientes activos
+// Actualizar datos de Google Business (accountName y locationName manual)
+app.put('/admin/cliente/:clienteId/google-location', verificarAdmin, async (req, res) => {
+  const { accountName, locationName } = req.body;
+  await Cliente.findByIdAndUpdate(req.params.clienteId, {
+    'googleAuth.accountName': accountName,
+    'googleAuth.locationName': locationName
+  });
+  res.json({ mensaje: '✅ Google Business location actualizado' });
+});
+
+// Desconectar Google de un cliente
+app.delete('/admin/cliente/:clienteId/google', verificarAdmin, async (req, res) => {
+  await Cliente.findByIdAndUpdate(req.params.clienteId, {
+    'googleAuth.conectado': false,
+    'googleAuth.refreshToken': null,
+    'googleAuth.accessToken': null,
+    'googleAuth.accountName': null,
+    'googleAuth.locationName': null
+  });
+  res.json({ mensaje: '✅ Google Business desconectado' });
+});
+
+// Generar link de setup para que el cliente conecte su Google Business
+app.post('/admin/cliente/:clienteId/setup-link', verificarAdmin, async (req, res) => {
+  const { clienteId } = req.params;
+  const cliente = await Cliente.findById(clienteId).select('nombreLocal email');
+  if (!cliente) return res.status(404).json({ error: 'Cliente no encontrado' });
+
+  // Token especial de setup (7 días de validez)
+  const setupToken = jwt.sign(
+    { clienteId, purpose: 'google_setup' },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+
+  const setupUrl = `${FRONTEND_URL}/setup?token=${setupToken}`;
+
+  // Opcional: enviar por email si hay transporter configurado
+  let emailEnviado = false;
+  if (process.env.EMAIL_USER && cliente.email) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+        port: process.env.EMAIL_PORT || 587,
+        secure: false,
+        auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASSWORD }
+      });
+
+      await transporter.sendMail({
+        from: `"LynxReview" <${process.env.EMAIL_USER}>`,
+        to: cliente.email,
+        subject: '🔗 Conecta tu Google Business con LynxReview',
+        html: `
+          <div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:20px">
+            <h2 style="color:#667eea">Hola ${cliente.nombreLocal} 👋</h2>
+            <p>Para que podamos gestionar y responder tus reseñas de Google automáticamente, necesitamos que conectes tu cuenta de Google Business.</p>
+            <p>Solo tardará 1 minuto:</p>
+            <a href="${setupUrl}" style="display:inline-block;background:#667eea;color:white;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:700;margin:16px 0">
+              Conectar Google Business →
+            </a>
+            <p style="color:#999;font-size:13px">Este link es válido durante 7 días.</p>
+          </div>
+        `
+      });
+      emailEnviado = true;
+    } catch (emailErr) {
+      console.error('[SETUP EMAIL] Error:', emailErr.message);
+    }
+  }
+
+  res.json({ mensaje: '✅ Link generado', setupUrl, emailEnviado });
+});
+
 app.post('/admin/procesar-todo', verificarAdmin, async (req, res) => {
-  const clientes = await Cliente.find({ googlePlaceId: { $exists: true, $ne: '' } });
+  const clientes = await Cliente.find({
+    $or: [
+      { googlePlaceId: { $exists: true, $ne: '' } },
+      { 'googleAuth.conectado': true }
+    ]
+  });
   const resultados = [];
   for (const c of clientes) {
     const r = await procesarResenasCliente(c);
@@ -439,12 +899,10 @@ app.post('/admin/procesar-todo', verificarAdmin, async (req, res) => {
   res.json({ mensaje: '✅ Procesamiento completado', clientes: clientes.length, resultados });
 });
 
-// Procesar reseñas de un cliente específico (desde admin panel)
 app.post('/admin/procesar-cliente/:clienteId', verificarAdmin, async (req, res) => {
   try {
     const cliente = await Cliente.findById(req.params.clienteId);
     if (!cliente) return res.status(404).json({ error: 'Cliente no encontrado' });
-    if (!cliente.googlePlaceId) return res.status(400).json({ error: 'El cliente no tiene Google Place ID configurado' });
     const resultado = await procesarResenasCliente(cliente);
     res.json({ mensaje: '✅ Procesamiento completado', ...resultado });
   } catch (err) {
@@ -453,38 +911,23 @@ app.post('/admin/procesar-cliente/:clienteId', verificarAdmin, async (req, res) 
   }
 });
 
-// ═════════════════════════════════════════════════════════════════
-// 🎯 QR GENERATOR (FASE 2)
-// ═════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// 🎯 QR GENERATOR
+// ═══════════════════════════════════════════════════════════════
 
-// Configurar transporter de email (SMTP)
-const emailTransporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-  port: process.env.EMAIL_PORT || 587,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD
-  }
-});
-
-// Generar nuevo código QR
 app.post('/admin/qr/generar', verificarAdmin, async (req, res) => {
   try {
     const codigo = 'QR_' + Math.random().toString(36).substr(2, 9).toUpperCase();
     const urlQR = `${FRONTEND_URL}/qr/${codigo}`;
     const datosQR = await QRCode.toDataURL(urlQR);
-
     const nuevoQR = new QR({ codigo, datosQR, estado: 'activo' });
     await nuevoQR.save();
-
     res.json({ mensaje: '✅ Código QR generado', qr: nuevoQR });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Listar todos los QRs (admin)
 app.get('/admin/qrs', verificarAdmin, async (req, res) => {
   try {
     const qrs = await QR.find({}).sort({ createdAt: -1 }).populate('clienteId', 'nombreLocal email');
@@ -494,7 +937,6 @@ app.get('/admin/qrs', verificarAdmin, async (req, res) => {
   }
 });
 
-// Obtener detalles de un QR
 app.get('/admin/qr/:id', verificarAdmin, async (req, res) => {
   try {
     const qr = await QR.findById(req.params.id).populate('clienteId', 'nombreLocal email');
@@ -505,7 +947,6 @@ app.get('/admin/qr/:id', verificarAdmin, async (req, res) => {
   }
 });
 
-// Vincular QR a cliente y actualizar URL destino
 app.put('/admin/qr/:id', verificarAdmin, async (req, res) => {
   try {
     const { clienteId, urlDestino } = req.body;
@@ -513,14 +954,16 @@ app.put('/admin/qr/:id', verificarAdmin, async (req, res) => {
       req.params.id,
       { clienteId, urlDestino, updatedAt: new Date() },
       { new: true }
-    ).populate('clienteId', 'nombreLocal email');
-    res.json({ mensaje: '✅ QR actualizado', qr });
+    );
+    res.status(200).json({
+      mensaje: '✅ QR actualizado',
+      qr: { _id: qr._id, codigo: qr.codigo, urlDestino: qr.urlDestino, scans: qr.scans, updatedAt: qr.updatedAt }
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Eliminar QR
 app.delete('/admin/qr/:id', verificarAdmin, async (req, res) => {
   try {
     await QR.findByIdAndDelete(req.params.id);
@@ -530,47 +973,31 @@ app.delete('/admin/qr/:id', verificarAdmin, async (req, res) => {
   }
 });
 
-// RUTA PÚBLICA: Redirigir desde QR con tracking
 app.get('/qr/:codigo', async (req, res) => {
   try {
     const qr = await QR.findOne({ codigo: req.params.codigo });
-    if (!qr || !qr.urlDestino) return res.status(404).send('QR no encontrado');
-
-    // Registrar escaneo
-    await QR.findByIdAndUpdate(qr._id, {
-      scans: qr.scans + 1,
-      ultimoScan: new Date()
-    });
-
-    // Redirigir a Google Maps del cliente
+    if (!qr || !qr.urlDestino) return res.status(404).send('QR no encontrado o sin URL configurada');
+    await QR.findByIdAndUpdate(qr._id, { scans: qr.scans + 1, ultimoScan: new Date() });
     res.redirect(qr.urlDestino);
   } catch (err) {
-    res.status(500).send('Error procesando QR');
+    res.status(500).send('Error procesando QR: ' + err.message);
   }
 });
 
-// Obtener estadísticas de un QR
 app.get('/admin/qr/:id/stats', verificarAdmin, async (req, res) => {
   try {
     const qr = await QR.findById(req.params.id).populate('clienteId', 'nombreLocal');
     if (!qr) return res.status(404).json({ error: 'QR no encontrado' });
-
-    res.json({
-      codigo: qr.codigo,
-      cliente: qr.clienteId?.nombreLocal || 'Sin asignar',
-      totalScans: qr.scans,
-      ultimoScan: qr.ultimoScan,
-      estado: qr.estado,
-      createdAt: qr.createdAt
-    });
+    res.json({ codigo: qr.codigo, cliente: qr.clienteId?.nombreLocal || 'Sin asignar', totalScans: qr.scans, ultimoScan: qr.ultimoScan, estado: qr.estado, createdAt: qr.createdAt });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// ═════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // 💳 CHECKOUT CON STRIPE
-// ═════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 app.get('/checkout', (req, res) => {
   const plan = req.query.plan || 'plus';
   const info = PLAN_INFO[plan] || PLAN_INFO.plus;
@@ -582,21 +1009,21 @@ app.get('/checkout', (req, res) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Registro - LynxReview</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-    .card { background: white; border-radius: 16px; padding: 40px; max-width: 440px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
-    .logo { text-align: center; margin-bottom: 24px; }
-    .logo span { font-size: 22px; font-weight: 700; color: #333; }
-    .plan-badge { background: ${info.color}15; border: 2px solid ${info.color}; color: ${info.color}; padding: 10px 20px; border-radius: 50px; text-align: center; font-weight: 600; margin-bottom: 28px; }
-    h2 { color: #333; font-size: 22px; margin-bottom: 6px; }
-    p.sub { color: #888; font-size: 14px; margin-bottom: 24px; }
-    label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; margin-top: 16px; }
-    input { width: 100%; padding: 12px 16px; border: 2px solid #e8e8e8; border-radius: 8px; font-size: 15px; transition: border-color 0.2s; outline: none; }
-    input:focus { border-color: ${info.color}; }
-    button { width: 100%; padding: 14px; background: ${info.color}; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 24px; }
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
-    .error { background: #fee; color: #c33; padding: 10px 14px; border-radius: 8px; font-size: 14px; margin-top: 16px; display: none; }
-    .seguro { text-align: center; font-size: 12px; color: #aaa; margin-top: 14px; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Segoe UI',sans-serif; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+    .card { background:white; border-radius:16px; padding:40px; max-width:440px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,0.2); }
+    .logo { text-align:center; margin-bottom:24px; }
+    .logo span { font-size:22px; font-weight:700; color:#333; }
+    .plan-badge { background:${info.color}15; border:2px solid ${info.color}; color:${info.color}; padding:10px 20px; border-radius:50px; text-align:center; font-weight:600; margin-bottom:28px; }
+    h2 { color:#333; font-size:22px; margin-bottom:6px; }
+    p.sub { color:#888; font-size:14px; margin-bottom:24px; }
+    label { display:block; font-size:13px; font-weight:600; color:#555; margin-bottom:6px; margin-top:16px; }
+    input { width:100%; padding:12px 16px; border:2px solid #e8e8e8; border-radius:8px; font-size:15px; transition:border-color 0.2s; outline:none; }
+    input:focus { border-color:${info.color}; }
+    button { width:100%; padding:14px; background:${info.color}; color:white; border:none; border-radius:8px; font-size:16px; font-weight:700; cursor:pointer; margin-top:24px; }
+    button:disabled { opacity:0.6; cursor:not-allowed; }
+    .error { background:#fee; color:#c33; padding:10px 14px; border-radius:8px; font-size:14px; margin-top:16px; display:none; }
+    .seguro { text-align:center; font-size:12px; color:#aaa; margin-top:14px; }
   </style>
 </head>
 <body>
@@ -699,9 +1126,9 @@ app.get('/pago-exitoso', async (req, res) => {
   }
 });
 
-// ═════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // 🔔 WEBHOOK DE STRIPE
-// ═════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 
 app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   let event = req.body;
@@ -739,21 +1166,60 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
   res.json({ received: true });
 });
 
-// ═════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// ⏰ CRON JOB — SINCRONIZACIÓN AUTOMÁTICA CADA 6 HORAS
+// ═══════════════════════════════════════════════════════════════
+
+async function sincronizarTodosLosClientes() {
+  try {
+    console.log('[CRON] 🔄 Iniciando sincronización automática de reseñas...');
+    const clientes = await Cliente.find({
+      $or: [
+        { googlePlaceId: { $exists: true, $ne: '' } },
+        { 'googleAuth.conectado': true }
+      ]
+    });
+
+    let totalNuevas = 0;
+    for (const c of clientes) {
+      try {
+        const r = await procesarResenasCliente(c);
+        if (r.nuevas > 0) {
+          console.log(`[CRON] ${c.nombreLocal}: ${r.nuevas} nuevas reseñas`);
+          totalNuevas += r.nuevas;
+        }
+      } catch (err) {
+        console.error(`[CRON] Error en ${c.nombreLocal}:`, err.message);
+      }
+    }
+
+    console.log(`[CRON] ✅ Sincronización completada. ${clientes.length} clientes, ${totalNuevas} nuevas reseñas.`);
+  } catch (err) {
+    console.error('[CRON] Error general:', err.message);
+  }
+}
+
+// Ejecutar cada 6 horas (00:00, 06:00, 12:00, 18:00)
+cron.schedule('0 0,6,12,18 * * *', sincronizarTodosLosClientes);
+
+// ═══════════════════════════════════════════════════════════════
 // 🚀 INICIAR SERVIDOR
-// ═════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 
 app.listen(PORT, () => {
   console.log('\n🚀 Servidor corriendo en puerto ' + PORT);
-  console.log('🌐 URL: https://lynxreview-webhook.onrender.com\n');
-  // Keep-alive: ping cada 14 min para evitar sleep en Render Free Tier
+  console.log('🌐 URL: ' + FRONTEND_URL + '\n');
+  console.log('⏰ Cron job de sincronización activado (cada 6h)\n');
+
+  // Keep-alive ping cada 14 minutos (Render Free Tier)
   setInterval(() => {
     const https = require('https');
-    https.get('https://lynxreview-webhook.onrender.com/health', () => {
-      console.log('[KEEP-ALIVE] Ping: ' + new Date().toLocaleTimeString());
-    }).on('error', (err) => console.log('[KEEP-ALIVE] Error:', err.message));
+    https.get(FRONTEND_URL + '/health', () => {
+      console.log(`[KEEP-ALIVE] ${new Date().toLocaleTimeString()}`);
+    }).on('error', (err) => {
+      console.log('[KEEP-ALIVE] Error:', err.message);
+    });
   }, 14 * 60 * 1000);
-
 });
 
 module.exports = app;
