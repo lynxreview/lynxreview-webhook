@@ -15,6 +15,7 @@
       justify-content: center;
       padding: 20px;
     }
+
     .card {
       background: white;
       border-radius: 20px;
@@ -23,70 +24,317 @@
       width: 100%;
       box-shadow: 0 25px 80px rgba(0,0,0,0.25);
     }
-    .logo { text-align: center; margin-bottom: 28px; }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 28px;
+    }
     .logo-icon {
-      width: 56px; height: 56px;
+      width: 56px;
+      height: 56px;
       background: linear-gradient(135deg, #667eea, #764ba2);
       border-radius: 16px;
-      display: inline-flex; align-items: center; justify-content: center;
-      font-size: 26px; margin-bottom: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      margin-bottom: 12px;
     }
-    .logo h2 { font-size: 22px; font-weight: 800; color: #1a1a2e; letter-spacing: -0.5px; }
-    .logo p { color: #888; font-size: 13px; margin-top: 4px; }
-    .step-indicator { display: flex; justify-content: center; gap: 8px; margin-bottom: 32px; }
-    .step { width: 32px; height: 4px; border-radius: 2px; background: #e5e7eb; }
+    .logo h2 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #1a1a2e;
+      letter-spacing: -0.5px;
+    }
+    .logo p {
+      color: #888;
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .step-indicator {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 32px;
+    }
+    .step {
+      width: 32px;
+      height: 4px;
+      border-radius: 2px;
+      background: #e5e7eb;
+    }
     .step.active { background: #667eea; }
-    .step.done { background: #10b981; }
-    .section-title { font-size: 20px; font-weight: 700; color: #1a1a2e; margin-bottom: 8px; }
-    .section-subtitle { color: #6b7280; font-size: 14px; line-height: 1.6; margin-bottom: 28px; }
+    .step.done   { background: #10b981; }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 8px;
+    }
+    .section-subtitle {
+      color: #6b7280;
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    /* ── Search ── */
+    .search-wrapper {
+      position: relative;
+      margin-bottom: 16px;
+    }
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 16px;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .search-input {
+      width: 100%;
+      padding: 14px 14px 14px 42px;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      font-size: 15px;
+      color: #1a1a2e;
+      outline: none;
+      transition: border-color 0.2s;
+      background: #fafafa;
+    }
+    .search-input:focus {
+      border-color: #667eea;
+      background: white;
+    }
+    .search-input::placeholder { color: #aaa; }
+
+    /* Autocomplete dropdown override */
+    .pac-container {
+      border-radius: 12px !important;
+      border: 1px solid #e5e7eb !important;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12) !important;
+      margin-top: 4px !important;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+    }
+    .pac-item {
+      padding: 10px 16px !important;
+      cursor: pointer;
+      font-size: 14px !important;
+    }
+    .pac-item:hover { background: #f5f3ff !important; }
+    .pac-item-selected { background: #ede9fe !important; }
+    .pac-icon { display: none !important; }
+    .pac-matched { font-weight: 700; color: #667eea; }
+
+    /* ── Selected business card ── */
+    .business-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: #f0fdf4;
+      border: 1.5px solid #10b981;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      animation: fadeIn 0.2s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+    .business-emoji {
+      font-size: 28px;
+      flex-shrink: 0;
+    }
+    .business-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .business-info strong {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      color: #1a1a2e;
+      white-space: nowraw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .business-info span {
+      font-size: 12px;
+      color: #6b7280;
+      white-space: nowraw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: block;
+    }
+    .btn-change {
+      background: none;
+      border: none;
+      color: #9ca3af;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px;
+      flex-shrink: 0;
+      line-height: 1;
+      transition: color 0.15s;
+    }
+    .btn-change:hover { color: #ef4444; }
+
+    /* ── Continue button ── */
+    .btn-continue {
+      width: 100%;
+      padding: 15px 24px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: -0.2px;
+    }
+    .btn-continue:hover:not(:disabled) {
+      background: #5568d3;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+    .btn-continue:disabled {
+      background: #d1d5db;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .btn-continue:active:not(:disabled) { transform: translateY(0); }
+
+    /* ── Benefits ── */
     .benefit {
-      display: flex; align-items: flex-start; gap: 14px;
-      padding: 16px; background: #f9fafb; border-radius: 12px; margin-bottom: 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 16px;
+      background: #f9fafb;
+      border-radius: 12px;
+      margin-bottom: 12px;
     }
     .benefit-icon {
-      width: 40px; height: 40px; border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px; flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
     }
     .benefit-icon.purple { background: #ede9fe; }
     .benefit-icon.green  { background: #d1fae5; }
     .benefit-icon.blue   { background: #dbeafe; }
-    .benefit-text strong { display: block; font-size: 14px; font-weight: 600; color: #1a1a2e; margin-bottom: 2px; }
-    .benefit-text span { font-size: 13px; color: #6b7280; }
-    .divider { border: none; border-top: 1px solid #f0f0f0; margin: 24px 0; }
+    .benefit-text strong {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: #1a1a2e;
+      margin-bottom: 2px;
+    }
+    .benefit-text span {
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #f0f0f0;
+      margin: 24px 0;
+    }
+
+    /* ── Google connect button ── */
     .btn-google {
-      width: 100%; display: flex; align-items: center; justify-content: center;
-      gap: 12px; padding: 16px 24px;
-      background: #667eea; color: white; border: none; border-radius: 12px;
-      font-size: 16px; font-weight: 700; cursor: pointer; text-decoration: none;
-      transition: all 0.2s; letter-spacing: -0.2px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 16px 24px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+      letter-spacing: -0.2px;
     }
-    .btn-google:hover { background: #5568d3; transform: translateY(-1px); box-shadow: 0 8px 25px rgba(102,126,234,0.4); }
+    .btn-google:hover {
+      background: #5568d3;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
     .btn-google:active { transform: translateY(0); }
-    .btn-google svg { width: 22px; height: 22px; flex-shrink: 0; }
-    .security-note {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 12px; color: #9ca3af; text-align: center; justify-content: center; margin-top: 16px;
+    .btn-google svg {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
     }
-    .error-card { text-align: center; padding: 16px; }
+
+    .security-note {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #9ca3af;
+      text-align: center;
+      justify-content: center;
+      margin-top: 16px;
+    }
+
+    /* ── Error & Loading ── */
+    .error-card {
+      text-align: center;
+      padding: 16px;
+    }
     .error-card .error-icon { font-size: 48px; margin-bottom: 16px; }
     .error-card h2 { color: #1a1a2e; margin-bottom: 8px; }
-    .error-card p { color: #6b7280; font-size: 14px; line-height: 1.6; }
-    .loading { display: none; text-align: center; padding: 20px; }
+    .error-card p  { color: #6b7280; font-size: 14px; line-height: 1.6; }
+
+    .loading { text-align: center; padding: 20px; }
     .loading-spinner {
-      width: 40px; height: 40px;
-      border: 3px solid #e5e7eb; border-top-color: #667eea;
-      border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+      width: 40px;
+      height: 40px;
+      border: 3px solid #e5e7eb;
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Maps API missing hint ── */
+    .maps-hint {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #92400e;
+      margin-bottom: 16px;
+      display: none;
+    }
   </style>
 </head>
 <body>
+
 <div class="card" id="main-card">
+
+  <!-- ESTADO CARGANDO -->
   <div class="loading" id="loading-state">
     <div class="loading-spinner"></div>
     <p style="color:#6b7280">Verificando tu link...</p>
   </div>
+
+  <!-- ESTADO ERROR -->
   <div id="error-state" style="display:none">
     <div class="error-card">
       <div class="error-icon">🔗</div>
@@ -94,22 +342,76 @@
       <p>Este link de configuración ya no es válido. Por favor, contacta a LynxReview para recibir un nuevo link.</p>
     </div>
   </div>
-  <div id="main-state" style="display:none">
+
+  <!-- PASO 1: BUSCAR NEGOCIO -->
+  <div id="search-state" style="display:none">
     <div class="logo">
       <div class="logo-icon">🔍</div>
       <h2>LynxReview</h2>
       <p>Gestión automática de reseñas</p>
     </div>
+
     <div class="step-indicator">
       <div class="step done"></div>
       <div class="step active"></div>
       <div class="step"></div>
     </div>
+
+    <div class="section-title">¿Dónde está tu negocio?</div>
+    <div class="section-subtitle">
+      Busca tu negocio en Google para que podamos conectar y gestionar tus reseñas automáticamente.
+    </div>
+
+    <div id="maps-hint" class="maps-hint">
+      ⚠️ La búsqueda automática no está disponible. Consulta con LynxReview para configurar la clave de Maps API.
+    </div>
+
+    <div class="search-wrapper">
+      <div class="search-icon">🔍</div>
+      <input
+        id="business-search"
+        type="text"
+        class="search-input"
+        placeholder="Nombre o dirección de tu negocio..."
+        autocomplete="off"
+      />
+    </div>
+
+    <div id="business-card" class="business-card" style="display:none">
+      <div class="business-emoji">🏪</div>
+      <div class="business-info">
+        <strong id="preview-name"></strong>
+        <span id="preview-address"></span>
+      </div>
+      <button class="btn-change" onclick="clearBusiness()" title="Cambiar negocio">✕</button>
+    </div>
+
+    <button id="btn-continue" class="btn-continue" onclick="goToConnect()" disabled>
+      Continuar →
+    </button>
+  </div>
+
+  <!-- PASO 2: CONECTAR GOOGLE BUSINESS -->
+  <div id="connect-state" style="display:none">
+    <div class="logo">
+      <div class="logo-icon">🔍</div>
+      <h2>LynxReview</h2>
+      <p>Gestión automática de reseñas</p>
+    </div>
+
+    <div class="step-indicator">
+      <div class="step done"></div>
+      <div class="step done"></div>
+      <div class="step active"></div>
+    </div>
+
     <div class="section-title">Conecta Google Business</div>
     <div class="section-subtitle">
-      Autoriza a LynxReview para gestionar las reseñas de <strong id="nombre-local"></strong> en Google.
+      Autoriza a LynxReview para gestionar las reseñas de
+      <strong id="nombre-negocio"></strong> en Google.
       Solo necesitas hacerlo una vez.
     </div>
+
     <div class="benefit">
       <div class="benefit-icon purple">🤖</div>
       <div class="benefit-text">
@@ -117,6 +419,7 @@
         <span>Respondemos cada reseña en menos de 1 hora</span>
       </div>
     </div>
+
     <div class="benefit">
       <div class="benefit-icon green">⭐</div>
       <div class="benefit-text">
@@ -124,6 +427,7 @@
         <span>Las reseñas positivas se responden sin intervención</span>
       </div>
     </div>
+
     <div class="benefit">
       <div class="benefit-icon blue">🛡️</div>
       <div class="benefit-text">
@@ -131,7 +435,9 @@
         <span>Nuestro equipo revisa y cuida cada respuesta delicada</span>
       </div>
     </div>
+
     <hr class="divider">
+
     <a id="btn-connect" href="#" class="btn-google">
       <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#fff" opacity=".9"/>
@@ -141,15 +447,29 @@
       </svg>
       Conectar con Google Business
     </a>
+
     <div class="security-note">
       🔒 Conexión segura · Solo accedemos a tus reseñas · Nunca modificamos otra información
     </div>
+
+    <div style="text-align:center;margin-top:16px">
+      <button
+        onclick="backToSearch()"
+        style="background:none;border:none;color:#9ca3af;font-size:13px;cursor:pointer;text-decoration:underline"
+      >← Cambiar negocio</button>
+    </div>
   </div>
+
 </div>
+
 <script>
   const params = new URLSearchParams(window.location.search);
-  const token = params.get('token');
-  document.getElementById('loading-state').style.display = 'block';
+  const token  = params.get('token');
+
+  let selectedPlaceId      = null;
+  let selectedBusinessName = null;
+
+  // ── Validate token ──────────────────────────────────────────────
   if (!token) {
     showError();
   } else {
@@ -158,19 +478,95 @@
       if (!payload.clienteId || payload.purpose !== 'google_setup') {
         showError();
       } else {
-        document.getElementById('loading-state').style.display = 'none';
-        document.getElementById('main-state').style.display = 'block';
-        document.getElementById('nombre-local').textContent = 'tu negocio';
-        document.getElementById('btn-connect').href = '/auth/google?token=' + encodeURIComponent(token);
+        initSearch();
       }
     } catch (e) {
       showError();
     }
   }
+
   function showError() {
     document.getElementById('loading-state').style.display = 'none';
     document.getElementById('error-state').style.display = 'block';
   }
+
+  // ── Init search step ────────────────────────────────────────────
+  function initSearch() {
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('search-state').style.display  = 'block';
+    loadMapsApi();
+  }
+
+  function loadMapsApi() {
+    const apiKey = 'PLACEHOLDER_MAPS_KEY';
+    if (!apiKey || apiKey === 'PLACEHOLDER_MAPS_KEY') {
+      // Maps key not configured — show hint but still allow manual flow
+      document.getElementById('maps-hint').style.display = 'block';
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async&callback=initAutocomplete`;
+    script.async = true;
+    script.onerror = () => {
+      document.getElementById('maps-hint').style.display = 'block';
+    };
+    document.head.appendChild(script);
+  }
+
+  // Called by Maps SDK when ready
+  window.initAutocomplete = function () {
+    const input = document.getElementById('business-search');
+    const autocomplete = new google.maps.places.Autocomplete(input, {
+      types:  ['establishment'],
+      fields: ['place_id', 'name', 'formatted_address']
+    });
+
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
+      if (place && place.place_id) {
+        selectedPlaceId      = place.place_id;
+        selectedBusinessName = place.name;
+        showBusinessCard(place.name, place.formatted_address || '');
+      }
+    });
+  };
+
+  function showBusinessCard(name, address) {
+    document.getElementById('preview-name').textContent    = name;
+    document.getElementById('preview-address').textContent = address;
+    document.getElementById('business-card').style.display = 'flex';
+    document.getElementById('btn-continue').disabled       = false;
+  }
+
+  function clearBusiness() {
+    selectedPlaceId      = null;
+    selectedBusinessName = null;
+    document.getElementById('business-search').value       = '';
+    document.getElementById('business-card').style.display = 'none';
+    document.getElementById('btn-continue').disabled       = true;
+  }
+
+  // ── Go to connect step ──────────────────────────────────────────
+  function goToConnect() {
+    if (!selectedPlaceId) return;
+
+    document.getElementById('nombre-negocio').textContent = selectedBusinessName;
+
+    const connectUrl = `/auth/google?token=${encodeURIComponent(token)}`
+      + `&placeId=${encodeURIComponent(selectedPlaceId)}`
+      + `&businessName=${encodeURIComponent(selectedBusinessName)}`;
+
+    document.getElementById('btn-connect').href = connectUrl;
+
+    document.getElementById('search-state').style.display  = 'none';
+    document.getElementById('connect-state').style.display = 'block';
+  }
+
+  function backToSearch() {
+    document.getElementById('connect-state').style.display = 'none';
+    document.getElementById('search-state').style.display  = 'block';
+  }
 </script>
+
 </body>
 </html>
