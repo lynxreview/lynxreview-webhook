@@ -32,7 +32,7 @@
         .tab-content.active { display: block; }
         .qr-container { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); border: 1px solid #e5e7eb; margin-bottom: 16px; }
         .qr-generator { display: grid; grid-template-columns: 1fr 300px; gap: 24px; }
-        .qr-form { display: flex; flex-direction: column; gap: 12px; }
+        .qr-form { display: flex; flex-direction: column; gap: 12pz; }
         .form-group { margin-bottom: 16px; }
         .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #333; }
         .form-group input, .form-group select { width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 13px; }
@@ -55,18 +55,18 @@
 <body>
     <div class="login-screen" id="loginScreen">
         <div class="login-box">
-            <h1>🔍 LynxReview</h1>
-            <p>Panel de Administración</p>
-            <input type="password" id="adminPassword" placeholder="Contraseña Admin" />
+            <h1>ð LynxReview</h1>
+            <p>Panel de AdministraciÃ³n</p>
+            <input type="password" id="adminPassword" placeholder="ContraseÃ±a Admin" />
             <button class="login-btn" onclick="doLogin()">Ingresar</button>
         </div>
     </div>
 
     <div class="main-screen" id="mainScreen">
         <div class="topbar">
-            <div class="topbar-logo">🔍 LynxReview - Admin</div>
+            <div class="topbar-logo">ð LynxReview - Admin</div>
             <div class="topbar-actions">
-                <button class="btn-process-all" onclick="procesarTodo()">Procesar Todas las Reseñas</button>
+                <button class="btn-process-all" onclick="procesarTodo()">Procesar Todas las ReseÃ±as</button>
                 <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
         </div>
@@ -75,7 +75,7 @@
             <div class="tab active" onclick="showTab('respuestas')">Respuestas Pendientes</div>
             <div class="tab" onclick="showTab('historial')">Historial</div>
             <div class="tab" onclick="showTab('clientes')">Clientes</div>
-            <div class="tab" onclick="showTab('qr')">📱 QR Generator</div>
+            <div class="tab" onclick="showTab('qr')">ð± QR Generator</div>
         </div>
         <div class="content">
             <div id="respuestas-tab" class="tab-content active">
@@ -89,7 +89,7 @@
             </div>
             <div id="qr-tab" class="tab-content">
                 <div class="qr-container">
-                    <h2>Generador de Códigos QR</h2>
+                    <h2>Generador de CÃ³digos QR</h2>
                     <div class="qr-generator">
                         <div class="qr-form">
                             <div class="form-group">
@@ -110,7 +110,7 @@
                         </div>
                     </div>
                     <div class="qr-list">
-                        <h3>Códigos QR Activos</h3>
+                        <h3>CÃ³digos QR Activos</h3>
                         <div id="qrListContent"></div>
                     </div>
                 </div>
@@ -141,44 +141,47 @@
 
         async function cargarStats() {
             try {
-                const res = await fetch(API_BASE + '/admin/stats?secret=' + token);
+                const res = await fetch(`${API_BASE}/admin/stats?secret=${token}`);
                 const data = await res.json();
-                document.getElementById('statsBar').innerHTML =
-                    '<div class="stat-card"><div class="stat-number">' + (data.pendientes || 0) + '</div><div class="stat-label">Pendientes</div></div>' +
-                    '<div class="stat-card"><div class="stat-number">' + (data.autoAprobadas || 0) + '</div><div class="stat-label">Aprobadas</div></div>' +
-                    '<div class="stat-card"><div class="stat-number">' + (data.publicadas || 0) + '</div><div class="stat-label">Publicadas</div></div>' +
-                    '<div class="stat-card"><div class="stat-number">' + (data.totalResenas || 0) + '</div><div class="stat-label">Total Resenas</div></div>' +
-                    '<div class="stat-card"><div class="stat-number">' + (data.totalClientes || 0) + '</div><div class="stat-label">Clientes</div></div>';
+                document.getElementById('statsBar').innerHTML = `
+                    <div class="stat-card"><div class="stat-number">${data.pendientes || 0}</div><div class="stat-label">Pendientes</div></div>
+                    <div class="stat-card"><div class="stat-number">${data.autoAprobadas || 0}</div><div class="stat-label">Aprobadas</div></div>
+                    <div class="stat-card"><div class="stat-number">${data.publicadas || 0}</div><div class="stat-label">Publicadas</div></div>
+                    <div class="stat-card"><div class="stat-number">${data.totalResenas || 0}</div><div class="stat-label">Total ReseÃ±as</div></div>
+                    <div class="stat-card"><div class="stat-number">${data.totalClientes || 0}</div><div class="stat-label">Clientes</div></div>
+                `;
             } catch(e) { console.error('Error:', e); }
         }
 
         async function cargarRespuestas() {
             try {
-                const res = await fetch(API_BASE + '/admin/pendientes?secret=' + token);
+                const res = await fetch(`${API_BASE}/admin/pendientes?secret=${token}`);
                 const respuestas = await res.json();
-                document.getElementById('respuestasContainer').innerHTML = respuestas.map(function(r) {
-                    return '<div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e5e7eb;">' +
-                        '<div style="font-weight: 600; margin-bottom: 8px;">&#11088; ' + r.resena.calificacion + ' - ' + r.resena.autor + '</div>' +
-                        '<div style="color: #666; font-size: 13px; margin-bottom: 8px;">Local: ' + r.cliente.nombreLocal + '</div>' +
-                        '<div style="background: #f9fafb; padding: 12px; border-radius: 6px; margin-bottom: 12px;">' + r.resena.textoResena + '</div>' +
-                        '<div style="margin-bottom: 12px;"><strong>Respuesta IA:</strong>' +
-                        '<textarea id="resp-' + r.respuesta._id + '" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; margin-top: 6px; min-height: 60px;">' + r.respuesta.respuestaIA + '</textarea></div>' +
-                        '<button class="btn btn-approve" onclick="aprobarRespuesta('' + r.respuesta._id + '')">&#9989; Aprobar</button>' +
-                        '<button class="btn" style="background: #ef4444; color: white; margin-left: 8px;" onclick="rechazarRespuesta('' + r.respuesta._id + '')">&#10060; Rechazar</button>' +
-                        '</div>';
-                }).join('');
+                document.getElementById('respuestasContainer').innerHTML = respuestas.map(r => `
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e5e7eb;">
+                        <div style="font-weight: 600; margin-bottom: 8px;">â­ ${r.resena.calificacion} - ${r.resena.autor}</div>
+                        <div style="color: #666; font-size: 13px; margin-bottom: 8px;">Local: ${r.cliente.nombreLocal}</div>
+                        <div style="background: #f9fafb; padding: 12px; border-radius: 6px; margin-bottom: 12px;">${r.resena.textoResena}</div>
+                        <div style="margin-bottom: 12px;">
+                            <strong>Respuesta IA:</strong>
+                            <textarea id="resp-${r.respuesta._id}" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; margin-top: 6px; min-height: 60px;">${r.respuesta.respuestaIA}</textarea>
+                        </div>
+                        <button class="btn btn-approve" onclick="aprobarRespuesta('${r.respuesta._id}')">â Aprobar</button>
+                        <button class="btn" style="background: #ef4444; color: white; margin-left: 8px;" onclick="rechazarRespuesta('${r.respuesta._id}')">â Rechazar</button>
+                    </div>
+                `).join('');
             } catch(e) { console.error('Error:', e); }
         }
 
         async function generarNuevoQR() {
             try {
-                const res = await fetch(API_BASE + '/admin/qr/generar?secret=' + token, {
+                const res = await fetch(`${API_BASE}/admin/qr/generar?secret=${token}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'x-admin-secret': token },
                     body: JSON.stringify({})
                 });
                 if (res.ok) {
-                    showToast('&#9989; Codigo QR generado', 'success');
+                    showToast('â CÃ³digo QR generado', 'success');
                     await cargarListaQRs();
                 } else {
                     showToast('Error al generar QR', 'error');
@@ -190,26 +193,31 @@
 
         async function cargarListaQRs() {
             try {
-                const res = await fetch(API_BASE + '/admin/qrs?secret=' + token);
+                const res = await fetch(`${API_BASE}/admin/qrs?secret=${token}`);
                 const qrs = await res.json();
-                var selectHtml = '<option value="">Seleccionar QR...</option>';
-                qrs.forEach(function(qr) {
-                    selectHtml += '<option value="' + qr._id + '">QR ' + qr.codigo + '</option>';
+
+                // Actualizar select
+                let selectHtml = '<option value="">Seleccionar QR...</option>';
+                qrs.forEach(qr => {
+                    selectHtml += `<option value="${qr._id}">QR ${qr.codigo}</option>`;
                 });
                 document.getElementById('qrClienteSelect').innerHTML = selectHtml;
-                var listHtml = '';
-                qrs.forEach(function(qr) {
-                    var clienteNombre = (qr.clienteId && qr.clienteId.nombreLocal) ? qr.clienteId.nombreLocal : 'Sin asignar';
-                    listHtml += '<div class="qr-item">' +
-                        '<div>' +
-                        '<div style="font-size: 12px; font-weight: 600; margin-bottom: 4px;">Codigo: ' + qr.codigo + '</div>' +
-                        '<div style="font-size: 11px; color: #999;">Escaneos: ' + (qr.scans || 0) + ' | Cliente: ' + clienteNombre + '</div>' +
-                        '</div>' +
-                        '<div>' +
-                        '<button class="btn btn-delete" onclick="descargarQR('' + qr._id + '', '' + qr.codigo + '')">Descargar</button>' +
-                        '<button class="btn btn-delete" style="background: #ef4444; margin-left: 4px;" onclick="eliminarQR('' + qr._id + '')">Eliminar</button>' +
-                        '</div>' +
-                        '</div>';
+
+                // Actualizar lista
+                let listHtml = '';
+                qrs.forEach(qr => {
+                    listHtml += `
+                        <div class="qr-item">
+                            <div>
+                                <div style="font-size: 12px; font-weight: 600; margin-bottom: 4px;">CÃ³digo: ${qr.codigo}</div>
+                                <div style="font-size: 11px; color: #999;">Escaneos: ${qr.scans || 0} | Cliente: ${qr.clienteId?.nombreLocal || 'Sin asignar'}</div>
+                            </div>
+                            <div>
+                                <button class="btn btn-delete" onclick="descargarQR('${qr._id}', '${qr.codigo}')">Descargar</button>
+                                <button class="btn btn-delete" style="background: #ef4444; margin-left: 4px;" onclick="eliminarQR('${qr._id}')">Eliminar</button>
+                            </div>
+                        </div>
+                    `;
                 });
                 document.getElementById('qrListContent').innerHTML = listHtml || '<p style="color: #999;">No hay QRs generados</p>';
             } catch(e) {
@@ -226,10 +234,10 @@
                 return;
             }
             try {
-                const res = await fetch(API_BASE + '/admin/qr/' + qrId + '?secret=' + token);
+                const res = await fetch(`${API_BASE}/admin/qr/${qrId}?secret=${token}`);
                 const qr = await res.json();
                 if (qr.datosQR) {
-                    document.getElementById('qrPreview').innerHTML = '<img src="' + qr.datosQR + '" alt="QR" />';
+                    document.getElementById('qrPreview').innerHTML = `<img src="${qr.datosQR}" alt="QR" />`;
                 }
                 document.getElementById('qrUrlDestino').value = qr.urlDestino || '';
             } catch(e) {
@@ -241,39 +249,103 @@
             const qrId = document.getElementById('qrClienteSelect').value;
             const urlDestino = document.getElementById('qrUrlDestino').value.trim();
             const guardarBtn = document.querySelector('button[onclick="guardarQRClient()"]');
-            if (!qrId) { showToast('Por favor selecciona un QR', 'info'); return; }
-            if (!urlDestino) { showToast('Por favor ingresa una URL de Google Maps', 'info'); return; }
-            if (!urlDestino.startsWith('http')) { showToast('La URL debe comenzar con http:// o https://', 'info'); return; }
-            if (!token) { showToast('Error de autenticacion. Vuelve a iniciar sesion', 'error'); return; }
+
+            // VALIDACIONES
+            if (!qrId) {
+                showToast('â ï¸ Por favor selecciona un QR', 'info');
+                return;
+            }
+
+            if (!urlDestino) {
+                showToast('â ï¸ Por favor ingresa una URL de Google Maps', 'info');
+                return;
+            }
+
+            if (!urlDestino.startsWith('http')) {
+                showToast('â ï¸ La URL debe comenzar con http:// o https://', 'info');
+                return;
+            }
+
+            if (!token) {
+                showToast('â Error de autenticaciÃ³n. Vuelve a iniciar sesiÃ³n', 'error');
+                return;
+            }
+
+            // MOSTRAR INDICADOR DE CARGA
             guardarBtn.disabled = true;
             const textoOriginal = guardarBtn.textContent;
-            guardarBtn.textContent = 'Guardando...';
+            guardarBtn.textContent = 'â³ Guardando...';
             guardarBtn.style.opacity = '0.6';
+
             try {
-                const res = await fetch(API_BASE + '/admin/qr/' + qrId + '?secret=' + token, {
+                console.log(`[GUARDAR QR] Enviando solicitud a ${API_BASE}/admin/qr/${qrId}`);
+                console.log(`[GUARDAR QR] URL: ${urlDestino}`);
+                console.log(`[GUARDAR QR] ContraseÃ±a: ${token}`);
+                console.log(`[GUARDAR QR] Header x-admin-secret enviado: ${token}`);
+
+                const res = await fetch(`${API_BASE}/admin/qr/${qrId}?secret=${token}`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'x-admin-secret': token },
-                    body: JSON.stringify({ urlDestino: urlDestino })
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-admin-secret': token
+                    },
+                    body: JSON.stringify({
+                        urlDestino: urlDestino
+                    })
                 });
+
+                console.log(`[GUARDAR QR] Status: ${res.status} ${res.statusText}`);
                 const responseText = await res.text();
+                console.log(`[GUARDAR QR] Respuesta completa: ${responseText}`);
+
                 if (res.ok) {
-                    showToast('URL guardada en la base de datos', 'success');
+                    let data;
+                    try {
+                        data = JSON.parse(responseText);
+                    } catch(e) {
+                        data = { mensaje: responseText };
+                    }
+                    console.log('â QR guardado exitosamente:', data);
+
+                    // MOSTRAR ÃXITO INMEDIATAMENTE
+                    showToast('â URL guardada INMEDIATAMENTE en la base de datos', 'success');
+
+                    // LIMPIAR FORMULARIO INMEDIATAMENTE (SIN ESPERAR)
                     document.getElementById('qrClienteSelect').value = '';
                     document.getElementById('qrUrlDestino').value = '';
                     document.getElementById('qrPreview').innerHTML = '<p style="color: #999;">Selecciona un QR para previsualizar</p>';
-                    cargarListaQRs().catch(function(e) { console.error('Error recargando lista:', e); });
+
+                    // RECARGAR LISTA EN BACKGROUND (sin bloquear UI)
+                    cargarListaQRs().catch(e => console.error('Error recargando lista:', e));
                 } else {
-                    var error;
-                    try { error = JSON.parse(responseText); } catch(e) { error = { error: responseText || 'Error desconocido' }; }
-                    var errorMsg = error.error || error.mensaje || 'No se pudo guardar';
-                    if (res.status === 403) errorMsg = 'Error de autenticacion - La contrasena es incorrecta';
-                    else if (res.status === 404) errorMsg = 'QR no encontrado en la base de datos';
-                    else if (res.status === 500) errorMsg = 'Error del servidor - ' + errorMsg;
+                    let error;
+                    try {
+                        error = JSON.parse(responseText);
+                    } catch(e) {
+                        error = { error: responseText || 'Error desconocido' };
+                    }
+                    console.error('â Error del servidor:', error);
+
+                    // Mensaje de error mejorado
+                    let errorMsg = error.error || error.mensaje || 'No se pudo guardar';
+
+                    if (res.status === 403) {
+                        errorMsg = 'ð Error de autenticaciÃ³n - La contraseÃ±a es incorrecta';
+                        console.error('â ï¸ PROBLEMA: El x-admin-secret no coincide con ADMIN_SECRET en el servidor');
+                    } else if (res.status === 404) {
+                        errorMsg = 'â QR no encontrado en la base de datos';
+                    } else if (res.status === 500) {
+                        errorMsg = 'â ï¸ Error del servidor - ' + errorMsg;
+                    }
+
                     showToast(errorMsg, 'error');
                 }
             } catch(e) {
-                showToast('Error de conexion: ' + e.message, 'error');
+                console.error('â Error de conexiÃ³n:', e);
+                console.error('Stack:', e.stack);
+                showToast('â Error de conexiÃ³n: ' + e.message, 'error');
             } finally {
+                // RESTAURAR BOTÃN
                 guardarBtn.disabled = false;
                 guardarBtn.textContent = textoOriginal;
                 guardarBtn.style.opacity = '1';
@@ -282,79 +354,101 @@
 
         async function descargarQR(qrId, codigo) {
             try {
-                const res = await fetch(API_BASE + '/admin/qr/' + qrId + '?secret=' + token);
+                const res = await fetch(`${API_BASE}/admin/qr/${qrId}?secret=${token}`);
                 const qr = await res.json();
                 const link = document.createElement('a');
                 link.href = qr.datosQR;
-                link.download = 'QR_' + codigo + '.png';
+                link.download = `QR_${codigo}.png`;
                 link.click();
-            } catch(e) { showToast('Error descargando QR', 'error'); }
+            } catch(e) {
+                showToast('Error descargando QR', 'error');
+            }
         }
 
         async function eliminarQR(qrId) {
-            if (!confirm('Eliminar este QR?')) return;
+            if (!confirm('wELiminar este QR?')) return;
             try {
-                const res = await fetch(API_BASE + '/admin/qr/' + qrId + '?secret=' + token, {
+                const res = await fetch(`${API_BASE}/admin/qr/${qrId}?secret=${token}`, {
                     method: 'DELETE',
                     headers: { 'x-admin-secret': token }
                 });
-                if (res.ok) { showToast('QR eliminado', 'success'); cargarListaQRs(); }
-                else { showToast('Error al eliminar', 'error'); }
-            } catch(e) { showToast('Error', 'error'); }
+                if (res.ok) {
+                    showToast('â QR eliminado', 'success');
+                    cargarListaQRs();
+                } else {
+                    showToast('Error al eliminar', 'error');
+                }
+            } catch(e) {
+                showToast('Error', 'error');
+            }
         }
 
         async function aprobarRespuesta(respuestaId) {
-            const texto = document.getElementById('resp-' + respuestaId).value;
+            const texto = document.getElementById(`resp-${respuestaId}`).value;
             try {
-                const res = await fetch(API_BASE + '/admin/respuesta/' + respuestaId + '/aprobar?secret=' + token, {
+                const res = await fetch(`${API_BASE}/admin/respuesta/${respuestaId}/aprobar?secret=${token}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'x-admin-secret': token },
                     body: JSON.stringify({ textoFinal: texto })
                 });
-                if (res.ok) { showToast('Respuesta aprobada', 'success'); await Promise.all([cargarStats(), cargarRespuestas()]); }
-            } catch(e) { showToast('Error', 'error'); }
+                if (res.ok) {
+                    showToast('â Respuesta aprobada', 'success');
+                    await Promise.all([cargarStats(), cargarRespuestas()]);
+                }
+            } catch(e) {
+                showToast('Error', 'error');
+            }
         }
 
         async function rechazarRespuesta(respuestaId) {
             const motivo = prompt('Motivo del rechazo:');
             if (!motivo) return;
             try {
-                const res = await fetch(API_BASE + '/admin/respuesta/' + respuestaId + '/rechazar?secret=' + token, {
+                const res = await fetch(`${API_BASE}/admin/respuesta/${respuestaId}/rechazar?secret=${token}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'x-admin-secret': token },
                     body: JSON.stringify({ motivo })
                 });
-                if (res.ok) { showToast('Respuesta rechazada', 'success'); await Promise.all([cargarStats(), cargarRespuestas()]); }
-            } catch(e) { showToast('Error', 'error'); }
+                if (res.ok) {
+                    showToast('â Respuesta rechazada', 'success');
+                    await Promise.all([cargarStats(), cargarRespuestas()]);
+                }
+            } catch(e) {
+                showToast('Error', 'error');
+            }
         }
 
         async function procesarTodo() {
             try {
-                const res = await fetch(API_BASE + '/admin/procesar-todo?secret=' + token, {
+                const res = await fetch(`${API_BASE}/admin/procesar-todo?secret=${token}`, {
                     method: 'POST',
                     headers: { 'x-admin-secret': token }
                 });
-                if (res.ok) { showToast('Procesamiento completado', 'success'); await Promise.all([cargarStats(), cargarRespuestas()]); }
-            } catch(e) { showToast('Error', 'error'); }
+                if (res.ok) {
+                    showToast('â Procesamiento completado', 'success');
+                    await Promise.all([cargarStats(), cargarRespuestas()]);
+                }
+            } catch(e) {
+                showToast('Error', 'error');
+            }
         }
 
         function showTab(tab) {
-            document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
-            document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-            var tabEl = document.getElementById(tab + '-tab');
-            if (tabEl) tabEl.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(tab + '-tab')?.classList.add('active');
             event.target.classList.add('active');
             if (tab === 'qr') cargarListaQRs();
         }
 
-        function showToast(msg, type) {
-            if (!type) type = 'success';
+        function showToast(msg, type = 'success') {
             const toast = document.getElementById('toast');
             toast.textContent = msg;
-            toast.className = 'toast ' + type + ' show';
-            setTimeout(function() { toast.classList.remove('show'); }, 3500);
+            toast.className = `toast ${type} show`;
+            setTimeout(() => toast.classList.remove('show'), 3500);
         }
 
+        // Init
         if (!token || token === 'null') {
             document.getElementById('loginScreen').style.display = 'flex';
             document.getElementById('mainScreen').style.display = 'none';
