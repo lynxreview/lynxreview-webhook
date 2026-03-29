@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LynxReview - Configuración Google Business</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 48px 40px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 25px 80px rgba(0,0,0,0.25);
+    }
+    .logo { text-align: center; margin-bottom: 28px; }
+    .logo-icon {
+      width: 56px; height: 56px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border-radius: 16px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 26px; margin-bottom: 12px;
+    }
+    .logo h2 { font-size: 22px; font-weight: 800; color: #1a1a2e; letter-spacing: -0.5px; }
+    .logo p { color: #888; font-size: 13px; margin-top: 4px; }
+    .step-indicator { display: flex; justify-content: center; gap: 8px; margin-bottom: 32px; }
+    .step { width: 32px; height: 4px; border-radius: 2px; background: #e5e7eb; }
+    .step.active { background: #667eea; }
+    .step.done { background: #10b981; }
+    .section-title { font-size: 20px; font-weight: 700; color: #1a1a2e; margin-bottom: 8px; }
+    .section-subtitle { color: #6b7280; font-size: 14px; line-height: 1.6; margin-bottom: 28px; }
+    .benefit {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 16px; background: #f9fafb; border-radius: 12px; margin-bottom: 12px;
+    }
+    .benefit-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .benefit-icon.purple { background: #ede9fe; }
+    .benefit-icon.green  { background: #d1fae5; }
+    .benefit-icon.blue   { background: #dbeafe; }
+    .benefit-text strong { display: block; font-size: 14px; font-weight: 600; color: #1a1a2e; margin-bottom: 2px; }
+    .benefit-text span { font-size: 13px; color: #6b7280; }
+    .divider { border: none; border-top: 1px solid #f0f0f0; margin: 24px 0; }
+    .btn-google {
+      width: 100%; display: flex; align-items: center; justify-content: center;
+      gap: 12px; padding: 16px 24px;
+      background: #667eea; color: white; border: none; border-radius: 12px;
+      font-size: 16px; font-weight: 700; cursor: pointer; text-decoration: none;
+      transition: all 0.2s; letter-spacing: -0.2px;
+    }
+    .btn-google:hover { background: #5568d3; transform: translateY(-1px); box-shadow: 0 8px 25px rgba(102,126,234,0.4); }
+    .btn-google:active { transform: translateY(0); }
+    .btn-google svg { width: 22px; height: 22px; flex-shrink: 0; }
+    .security-note {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: #9ca3af; text-align: center; justify-content: center; margin-top: 16px;
+    }
+    .error-card { text-align: center; padding: 16px; }
+    .error-card .error-icon { font-size: 48px; margin-bottom: 16px; }
+    .error-card h2 { color: #1a1a2e; margin-bottom: 8px; }
+    .error-card p { color: #6b7280; font-size: 14px; line-height: 1.6; }
+    .loading { display: none; text-align: center; padding: 20px; }
+    .loading-spinner {
+      width: 40px; height: 40px;
+      border: 3px solid #e5e7eb; border-top-color: #667eea;
+      border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<div class="card" id="main-card">
+  <div class="loading" id="loading-state">
+    <div class="loading-spinner"></div>
+    <p style="color:#6b7280">Verificando tu link...</p>
+  </div>
+  <div id="error-state" style="display:none">
+    <div class="error-card">
+      <div class="error-icon">🔗</div>
+      <h2>Link inválido o expirado</h2>
+      <p>Este link de configuración ya no es válido. Por favor, contacta a LynxReview para recibir un nuevo link.</p>
+    </div>
+  </div>
+  <div id="main-state" style="display:none">
+    <div class="logo">
+      <div class="logo-icon">🔍</div>
+      <h2>LynxReview</h2>
+      <p>Gestión automática de reseñas</p>
+    </div>
+    <div class="step-indicator">
+      <div class="step done"></div>
+      <div class="step active"></div>
+      <div class="step"></div>
+    </div>
+    <div class="section-title">Conecta Google Business</div>
+    <div class="section-subtitle">
+      Autoriza a LynxReview para gestionar las reseñas de <strong id="nombre-local"></strong> en Google.
+      Solo necesitas hacerlo una vez.
+    </div>
+    <div class="benefit">
+      <div class="benefit-icon purple">🤖</div>
+      <div class="benefit-text">
+        <strong>Respuestas automáticas con IA</strong>
+        <span>Respondemos cada reseña en menos de 1 hora</span>
+      </div>
+    </div>
+    <div class="benefit">
+      <div class="benefit-icon green">⭐</div>
+      <div class="benefit-text">
+        <strong>5 estrellas = publicación inmediata</strong>
+        <span>Las reseñas positivas se responden sin intervención</span>
+      </div>
+    </div>
+    <div class="benefit">
+      <div class="benefit-icon blue">🛡️</div>
+      <div class="benefit-text">
+        <strong>Revisión humana para reseñas negativas</strong>
+        <span>Nuestro equipo revisa y cuida cada respuesta delicada</span>
+      </div>
+    </div>
+    <hr class="divider">
+    <a id="btn-connect" href="#" class="btn-google">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#fff" opacity=".9"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#fff" opacity=".9"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#fff" opacity=".9"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#fff" opacity=".9"/>
+      </svg>
+      Conectar con Google Business
+    </a>
+    <div class="security-note">
+      🔒 Conexión segura · Solo accedemos a tus reseñas · Nunca modificamos otra información
+    </div>
+  </div>
+</div>
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+  document.getElementById('loading-state').style.display = 'block';
+  if (!token) {
+    showError();
+  } else {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (!payload.clienteId || payload.purpose !== 'google_setup') {
+        showError();
+      } else {
+        document.getElementById('loading-state').style.display = 'none';
+        document.getElementById('main-state').style.display = 'block';
+        document.getElementById('nombre-local').textContent = 'tu negocio';
+        document.getElementById('btn-connect').href = '/auth/google?token=' + encodeURIComponent(token);
+      }
+    } catch (e) {
+      showError();
+    }
+  }
+  function showError() {
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('error-state').style.display = 'block';
+  }
+</script>
+</body>
+</html>
