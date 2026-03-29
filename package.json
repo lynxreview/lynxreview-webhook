@@ -17,7 +17,9 @@
     "openai": "^4.28.0",
     "qrcode": "^1.5.3",
     "nodemailer": "^6.9.7",
-    "pdfkit": "^0.13.0"
+    "pdfkit": "^0.13.0",
+    "googleapis": "^140.0.0",
+    "node-cron": "^3.0.3"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
