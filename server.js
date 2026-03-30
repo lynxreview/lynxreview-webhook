@@ -3,6 +3,7 @@ const mongoose   = require('mongoose');
 const bcrypt     = require('bcryptjs');
 const jwt        = require('jsonwebtoken');
 const path       = require('path');
+const fs         = require('fs');
 const OpenAI     = require('openai');
 const QRCode     = require('qrcode');
 const nodemailer = require('nodemailer');
@@ -294,7 +295,7 @@ async function procesarResenasCliente(cliente) {
         rating:           starRatingToNumber(r.starRating),
         author_name:      r.reviewer?.displayName || 'Anónimo',
         time:             Math.floor(new Date(r.createTime).getTime() / 1000),
-        googleReviewName: r.name  // ej: accounts/xxx/locations/xxx/reviews/xxx
+        googleReviewName: r.name
       }));
       modoAPI = true;
       console.log(`[SYNC] ${cliente.nombreLocal}: usando Business Profile API (${resenasNormalizadas.length} reseñas)`);
@@ -326,7 +327,6 @@ async function procesarResenasCliente(cliente) {
     const existe = await Resena.findOne({ resenaIdExterno: externalId });
 
     if (existe) {
-      // Actualizar googleReviewName si ahora disponemos de él
       if (r.googleReviewName && !existe.googleReviewName) {
         await Resena.findByIdAndUpdate(existe._id, { googleReviewName: r.googleReviewName });
       }
@@ -345,7 +345,6 @@ async function procesarResenasCliente(cliente) {
     });
     await resena.save();
 
-    // Generar respuesta con IA
     let textoIA = '';
     try {
       textoIA = await generarRespuestaIA(r.text || 'Reseña sin texto', r.rating, cliente.nombreLocal);
@@ -354,17 +353,14 @@ async function procesarResenasCliente(cliente) {
       textoIA = `Gracias por tu reseña. Valoramos mucho tu opinión en ${cliente.nombreLocal}.`;
     }
 
-    // 5★ → aprobada automáticamente; <5★ → pendiente aprobación Xavier
     let estadoInicial = r.rating === 5 ? 'aprobada' : 'pendiente_aprobacion';
     let publicadoAuto = false;
 
-    // Si tiene OAuth y es 5★, publicar directamente en Google
     if (modoAPI && r.rating === 5 && r.googleReviewName) {
       const resultado = await publicarRespuestaGoogle(cliente, r.googleReviewName, textoIA);
       if (resultado.ok) {
         estadoInicial = 'publicada';
         publicadoAuto = true;
-        console.log(`[AUTO-PUBLISH] 5★ publicada automáticamente en Google para ${cliente.nombreLocal}`);
       }
     }
 
@@ -373,9 +369,7 @@ async function procesarResenasCliente(cliente) {
       clienteId:   cliente._id,
       respuestaIA: textoIA,
       estado:      estadoInicial,
-      ...(publicadoAuto ? {
-        publicadoEn: { fuente: 'google_api_auto', fecha: new Date() }
-      } : {})
+      ...(publicadoAuto ? { publicadoEn: { fuente: 'google_api_auto', fecha: new Date() } } : {})
     });
     await respuesta.save();
     nuevas++;
@@ -414,24 +408,31 @@ app.get('/admin.html', (req, res) => {
 
 // Página de setup de Google para el cliente
 app.get('/setup', (req, res) => {
-  res.sendFile(path.join(__dirname, 'setup.html'));
+  try {
+    const html = fs.readFileSync(path.join(__dirname, 'setup.html'), 'utf8');
+    const mapsKey = process.env.GOOGLE_MAPS_API_KEY || '';
+    res.send(html.replace('PLACEHOLDER_MAPS_KEY', mapsKey));
+  } catch (e) {
+    res.status(500).send('Error loading setup page');
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════
 // 🔗 GOOGLE BUSINESS PROFILE — RUTAS OAUTH
 // ═══════════════════════════════════════════════════════════════
 
-// Iniciar flujo OAuth — el token de setup va en ?token=xxx
+// Iniciar flujo OAuth
 app.get('/auth/google', (req, res) => {
-  const { token } = req.query;
+  const { token, placeId, businessName } = req.query;
   if (!token) return res.status(400).send('Token de setup requerido');
 
-  // Verificar que el token de setup es válido
   try {
     jwt.verify(token, JWT_SECRET);
   } catch (e) {
     return res.status(400).send('Token inválido o expirado. Solicita un nuevo link.');
   }
+
+  const stateData = JSON.stringify({ token, placeId: placeId || '', businessName: businessName || '' });
 
   const oauth2 = crearOAuth2Client();
   const authUrl = oauth2.generateAuthUrl({
@@ -440,8 +441,8 @@ app.get('/auth/google', (req, res) => {
       'https://www.googleapis.com/auth/business.manage',
       'https://www.googleapis.com/auth/userinfo.email'
     ],
-    state: token,       // lo recuperamos en el callback
-    prompt: 'consent'   // forzar para siempre recibir refresh_token
+    state: stateData,
+    prompt: 'consent'
   });
 
   res.redirect(authUrl);
@@ -449,17 +450,28 @@ app.get('/auth/google', (req, res) => {
 
 // Callback de Google OAuth
 app.get('/auth/google/callback', async (req, res) => {
-  const { code, state: setupToken, error } = req.query;
+  const { code, state: stateRaw, error } = req.query;
 
   if (error) {
     return res.send(htmlSetupResult(false, 'Autenticación cancelada. Vuelve al link de setup y prueba de nuevo.'));
   }
 
-  if (!code || !setupToken) {
+  if (!code || !stateRaw) {
     return res.send(htmlSetupResult(false, 'Parámetros inválidos en el callback.'));
   }
 
-  // Verificar token y extraer clienteId
+  let setupToken, placeId, businessName;
+  try {
+    const stateData = JSON.parse(stateRaw);
+    setupToken = stateData.token;
+    placeId = stateData.placeId || '';
+    businessName = stateData.businessName || '';
+  } catch (e) {
+    setupToken = stateRaw;
+    placeId = '';
+    businessName = '';
+  }
+
   let clienteId;
   try {
     const decoded = jwt.verify(setupToken, JWT_SECRET);
@@ -474,18 +486,15 @@ app.get('/auth/google/callback', async (req, res) => {
     const { tokens } = await oauth2.getToken(code);
     oauth2.setCredentials(tokens);
 
-    // Obtener cuentas de Google Business
     let accountName = '';
     let locationName = '';
     let googleEmail = '';
 
     try {
-      // Obtener email del usuario
       const oauth2Api = google.oauth2({ version: 'v2', auth: oauth2 });
       const userInfo = await oauth2Api.userinfo.get();
       googleEmail = userInfo.data.email || '';
 
-      // Listar cuentas de Google Business
       const accountsRes = await fetch('https://mybusinessaccountmanagement.googleapis.com/v1/accounts', {
         headers: { 'Authorization': `Bearer ${tokens.access_token}` }
       });
@@ -494,8 +503,6 @@ app.get('/auth/google/callback', async (req, res) => {
 
       if (firstAccount) {
         accountName = firstAccount.name;
-
-        // Listar localizaciones
         const locationsRes = await fetch(`https://mybusiness.googleapis.com/v4/${accountName}/locations?pageSize=10`, {
           headers: { 'Authorization': `Bearer ${tokens.access_token}` }
         });
@@ -505,7 +512,6 @@ app.get('/auth/google/callback', async (req, res) => {
       }
     } catch (apiErr) {
       console.error('[OAUTH CALLBACK] Error obteniendo cuenta/location:', apiErr.message);
-      // Continuar aunque no podamos obtener el account — se puede configurar manualmente
     }
 
     // Guardar tokens y datos en MongoDB
@@ -516,7 +522,8 @@ app.get('/auth/google/callback', async (req, res) => {
       'googleAuth.tokenExpiry':  tokens.expiry_date ? new Date(tokens.expiry_date) : null,
       'googleAuth.accountName':  accountName,
       'googleAuth.locationName': locationName,
-      'googleAuth.googleEmail':  googleEmail
+      'googleAuth.googleEmail':  googleEmail,
+      googlePlaceId:             placeId
     });
 
     const cliente = await Cliente.findById(clienteId).select('nombreLocal');
@@ -996,7 +1003,7 @@ app.get('/admin/qr/:id/stats', verificarAdmin, async (req, res) => {
 
 // ═══════════════════════════════════════════════════════════════
 // 💳 CHECKOUT CON STRIPE
-// ════════════════════════════════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 
 app.get('/checkout', (req, res) => {
   const plan = req.query.plan || 'plus';
