@@ -1229,4 +1229,191 @@ app.listen(PORT, () => {
   }, 14 * 60 * 1000);
 });
 
+// ===== OAUTH2 GOOGLE BUSINESS PROFILE =====
+// Autorización y gestión de acceso a Google Business Profile
+
+// Ruta: Iniciar autenticación OAuth2
+app.post('/api/auth/google-auth', async (req, res) => {
+    try {
+          const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+          const REDIRECT_URI = `${process.env.FRONTEND_URL}/auth/google/callback`;
+          const SCOPES = [
+                  'https://www.googleapis.com/auth/business.manage',
+                  'https://www.googleapis.com/auth/drive'
+                ].join(' ');
+
+          const state = Math.random().toString(36).substring(7);
+          req.session = req.session || {};
+          req.session.oauth_state = state;
+
+          const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+          authUrl.searchParams.append('client_id', CLIENT_ID);
+          authUrl.searchParams.append('redirect_uri', REDIRECT_URI);
+          authUrl.searchParams.append('response_type', 'code');
+          authUrl.searchParams.append('scope', SCOPES);
+          authUrl.searchParams.append('state', state);
+          authUrl.searchParams.append('access_type', 'offline');
+          authUrl.searchParams.append('prompt', 'consent');
+
+          res.json({ authUrl: authUrl.toString() });
+    } catch (error) {
+          console.error('Error OAuth2:', error);
+          res.status(500).json({ error: 'Error iniciando autenticación' });
+    }
+});
+
+// Ruta: Callback de Google OAuth2
+app.get('/api/auth/google/callback', async (req, res) => {
+    try {
+          const { code, state } = req.query;
+
+          if (!state || state !== req.session?.oauth_state) {
+                  return res.status(400).json({ error: 'Invalid state parameter' });
+          }
+
+          // Intercambiar código por tokens
+          const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                            client_id: process.env.GOOGLE_CLIENT_ID,
+                            client_secret: process.env.GOOGLE_CLIENT_SECRET,
+                            code,
+                            grant_type: 'authorization_code',
+                            redirect_uri: `${process.env.FRONTEND_URL}/auth/google/callback`,
+                  }),
+          });
+
+          const tokens = await tokenResponse.json();
+          if (!tokens.access_token) {
+                  throw new Error('No access token received');
+          }
+
+          // Obtener información del usuario
+          const profileResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+                  headers: { Authorization: `Bearer ${tokens.access_token}` },
+          });
+          const profile = await profileResponse.json();
+
+          // Guardar cliente y tokens en BD
+          let cliente = await ClienteSchema.findOne({ email: profile.email });
+          if (!cliente) {
+                  cliente = new ClienteSchema({
+                            nombre: profile.name,
+                            email: profile.email,
+                            googleId: profile.id,
+                  });
+          }
+
+          cliente.googleAccessToken = tokens.access_token;
+          cliente.googleRefreshToken = tokens.refresh_token || cliente.googleRefreshToken;
+          cliente.tokenExpiresAt = new Date(Date.now() + (tokens.expires_in * 1000));
+          await cliente.save();
+
+          // Crear JWT del cliente
+          const jwtToken = jwt.sign(
+            { clienteId: cliente._id, email: cliente.email },
+                  process.env.JWT_SECRET,
+            { expiresIn: '30d' }
+                );
+
+          res.redirect(`${process.env.FRONTEND_URL}/dashboard?token=${jwtToken}&success=true`);
+    } catch (error) {
+          console.error('OAuth callback error:', error);
+          res.redirect(`${process.env.FRONTEND_URL}/dashboard?error=auth_failed`);
+    }
+});
+
+// Ruta: Verificar estado de conexión Google
+app.get('/api/auth/google-status', verificarToken, async (req, res) => {
+    try {
+          const cliente = await ClienteSchema.findById(req.clienteId);
+
+          if (!cliente || !cliente.googleAccessToken) {
+                  return res.json({ connected: false });
+          }
+
+          // Verificar si token necesita refresh
+          if (cliente.tokenExpiresAt < new Date()) {
+                  const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                        client_id: process.env.GOOGLE_CLIENT_ID,
+                                        client_secret: process.env.GOOGLE_CLIENT_SECRET,
+                                        refresh_token: cliente.googleRefreshToken,
+                                        grant_type: 'refresh_token',
+                            }),
+                  });
+
+                  const newTokens = await refreshResponse.json();
+                  cliente.googleAccessToken = newTokens.access_token;
+                  cliente.tokenExpiresAt = new Date(Date.now() + (newTokens.expires_in * 1000));
+                  await cliente.save();
+          }
+
+          res.json({
+                  connected: true,
+                  email: cliente.email,
+                  lastSync: cliente.lastSyncTime,
+          });
+    } catch (error) {
+          console.error('Status check error:', error);
+          res.json({ connected: false });
+    }
+});
+
+// Ruta: Desconectar Google
+app.post('/api/auth/disconnect-google', verificarToken, async (req, res) => {
+    try {
+          const cliente = await ClienteSchema.findById(req.clienteId);
+
+          if (cliente?.googleAccessToken) {
+                  // Revocar token
+                  await fetch('https://oauth2.googleapis.com/revoke', {
+                            method: 'POST',
+                            body: new URLSearchParams({ token: cliente.googleAccessToken }),
+                  }).catch(() => {});
+          }
+
+          cliente.googleAccessToken = null;
+          cliente.googleRefreshToken = null;
+          cliente.tokenExpiresAt = null;
+          await cliente.save();
+
+          res.json({ success: true });
+    } catch (error) {
+          console.error('Disconnect error:', error);
+          res.status(500).json({ error: 'Error desconectando' });
+    }
+});
+
+// Ruta: Sincronizar reseñas
+app.post('/api/reviews/sync', verificarToken, async (req, res) => {
+    try {
+          const cliente = await ClienteSchema.findById(req.clienteId);
+
+          if (!cliente?.googleAccessToken) {
+                  return res.status(401).json({ error: 'Google no conectado' });
+          }
+
+          // Obtener reseñas de Google Business Profile
+          const reviews = await obtenerResenasBusinessAPI(cliente);
+
+          cliente.lastSyncTime = new Date();
+          await cliente.save();
+
+          res.json({
+                  success: true,
+                  reviewsCount: reviews.length,
+                  lastSync: cliente.lastSyncTime,
+          });
+    } catch (error) {
+          console.error('Sync error:', error);
+          res.status(500).json({ error: 'Error sincronizando reseñas' });
+    }
+});
+
+
+
 module.exports = app;
