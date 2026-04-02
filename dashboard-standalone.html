@@ -220,7 +220,43 @@
           transform: translateY(0);
           box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
         }
-    </style>
+    
+        /* === Google Status Section === */
+        .google-connected-state { display: flex; flex-direction: column; gap: 12px; }
+        .google-connected-badge {
+          display: inline-flex; align-items: center; gap: 8px;
+          background: #e8f5e9; color: #2e7d32;
+          padding: 8px 14px; border-radius: 8px;
+          font-weight: 600; font-size: 14px;
+        }
+        .google-business-info { font-size: 13px; color: #555; }
+        .google-business-info strong { display: block; margin-bottom: 2px; }
+        .location-badge {
+          display: inline-block; background: #f0f4ff; color: #3949ab;
+          padding: 2px 8px; border-radius: 4px; font-size: 12px;
+        }
+        .google-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+        .btn-sync-reviews {
+          display: inline-flex; align-items: center; gap: 6px;
+          background: #667eea; color: white; border: none;
+          padding: 8px 16px; border-radius: 6px; font-size: 13px;
+          font-weight: 600; cursor: pointer; transition: background 0.2s;
+        }
+        .btn-sync-reviews:hover { background: #5a6fd6; }
+        .btn-disconnect-google {
+          background: transparent; color: #e53935; border: 1px solid #e53935;
+          padding: 8px 16px; border-radius: 6px; font-size: 13px;
+          font-weight: 600; cursor: pointer; transition: background 0.2s;
+        }
+        .btn-disconnect-google:hover { background: #fdecea; }
+        .google-connect-hint { font-size: 12px; color: #888; margin-top: 8px; }
+        .google-ai-badge {
+          display: inline-flex; align-items: center; gap: 5px;
+          background: linear-gradient(135deg, #667eea, #764ba2);
+          color: white; padding: 4px 10px; border-radius: 20px;
+          font-size: 11px; font-weight: 600;
+        }
+</style>
 </head>
 <body>
 
@@ -328,10 +364,13 @@
             </div>
         </div>
 
-<button class="btn-google-connect" onclick="iniciarOAuth2()">
-                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%234285F4' d='M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z'/%3E%3Cpath fill='%2334A853' d='M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z'/%3E%3Cpath fill='%23FBBC05' d='M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z'/%3E%3Cpath fill='%23EA4335' d='M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z'/%3E%3C/svg%3E" alt="Google" style="width:18px;height:18px;margin-right:8px;vertical-align:middle;">
-                            Conectar con Google
-</button>button>
+<div id="google-section">
+  <button class="btn-google-connect" onclick="iniciarOAuth2()">
+    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%234285F4' d='M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z'/%3E%3Cpath fill='%2334A853' d='M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z'/%3E%3C/svg%3E" alt="Google" style="width:18px;height:18px;margin-right:8px;vertical-align:middle;">
+    Conectar con Google Business
+  </button>
+  <p class="google-connect-hint">Conecta tu cuenta de Google para que la IA gestione tus reseñas automáticamente cada 6 horas.</p>
+</div>button>
         <div id="setupDone" class="setup-done" style="display:none;">
             ✅ <span>Tu negocio está conectado. Las reseñas de Google se monitorizan automáticamente.</span>
         </div>
@@ -501,6 +540,8 @@
         }
 
         cargarResenas();
+        checkGoogleStatus();
+        checkOAuthCallback();
     }
 
     async function cargarResenas() {
@@ -649,20 +690,86 @@
     }
 
         // =========== OAUTH2 GOOGLE ===========
-        async function iniciarOAuth2() {
-                  try {
-                              const response = await fetch('/api/auth/google-auth', { method: 'POST' });
-                              const data = await response.json();
-                              if (data.authUrl) {
-                                            window.location.href = data.authUrl;
-                              } else {
-                                            showToast('Error: No se pudo obtener la URL de autenticación', 'error');
-                              }
-                  } catch (error) {
-                              showToast('Error iniciando autenticación con Google', 'error');
-                              console.error('OAuth error:', error);
-                  }
-        }
+        async     async function checkGoogleStatus() {
+      try {
+        const res = await fetch('/api/auth/google-status', { headers: headers() });
+        if (!res.ok) return;
+        const data = await res.json();
+        updateGoogleUI(data);
+      } catch(e) { console.error('checkGoogleStatus:', e); }
+    }
+
+    function updateGoogleUI(data) {
+      const section = document.getElementById('google-section');
+      if (!section) return;
+      const svgCheck = '<svg width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#34A853"/><path d="M7 12l3.5 3.5L17 9" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      const svgSync = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>';
+      if (data && data.conectado) {
+        const email = data.email || 'Cuenta Google';
+        const loc = data.locationName ? '<span class="location-badge">' + data.locationName + '</span>' : '';
+        section.innerHTML =
+          '<div class="google-connected-state">' +
+            '<div class="google-connected-badge">' + svgCheck + ' Google Business Conectado</div>' +
+            '<div class="google-business-info"><strong>' + email + '</strong>' + loc + '</div>' +
+            '<div style="margin-top:4px"><span class="google-ai-badge">&#x1F916; IA activa cada 6h</span></div>' +
+            '<div class="google-actions">' +
+              '<button class="btn-sync-reviews" onclick="sincronizarResenas()">' + svgSync + ' Sincronizar ahora</button>' +
+              '<button class="btn-disconnect-google" onclick="disconnectGoogle()">Desconectar</button>' +
+            '</div>' +
+          '</div>';
+      } else {
+        const g = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%234285F4' d='M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z'/%3E%3Cpath fill='%2334A853' d='M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z'/%3E%3Cpath fill='%23FBBC05' d='M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z'/%3E%3Cpath fill='%23EA4335' d='M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z'/%3E%3C/svg%3E";
+        section.innerHTML =
+          '<button class="btn-google-connect" onclick="iniciarOAuth2()">' +
+          '<img src="' + g + '" alt="Google" style="width:18px;height:18px;margin-right:8px;vertical-align:middle;">' +
+          ' Conectar con Google Business</button>' +
+          '<p class="google-connect-hint">Conecta tu cuenta de Google para que la IA gestione tus reseñas automáticamente cada 6 horas.</p>';
+      }
+    }
+
+    async function disconnectGoogle() {
+      if (!confirm('¿Desconectar Google Business? Dejarás de recibir gestión automática de reseñas.')) return;
+      try {
+        const res = await fetch('/api/auth/disconnect-google', { method: 'POST', headers: headers() });
+        if (res.ok) { showToast('Google Business desconectado', 'info'); checkGoogleStatus(); }
+        else { showToast('Error al desconectar', 'error'); }
+      } catch(e) { showToast('Error al desconectar', 'error'); }
+    }
+
+    async function sincronizarResenas() {
+      try {
+        showToast('Sincronizando reseñas...', 'info');
+        const res = await fetch('/api/reviews/sync', { method: 'POST', headers: headers() });
+        if (res.ok) { showToast('Reseñas sincronizadas', 'success'); cargarResenas(); }
+        else { showToast('Error al sincronizar', 'error'); }
+      } catch(e) { showToast('Error al sincronizar', 'error'); }
+    }
+
+    function checkOAuthCallback() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('google') === 'success' || params.get('connected') === 'true') {
+        showToast('Google Business conectado correctamente ✅', 'success');
+        history.replaceState({}, '', window.location.pathname);
+        checkGoogleStatus();
+      } else if (params.get('error')) {
+        showToast('Error al conectar con Google: ' + params.get('error'), 'error');
+        history.replaceState({}, '', window.location.pathname);
+      }
+    }
+
+    async function iniciarOAuth2() {
+      try {
+        showToast('Conectando con Google...', 'info');
+        const res = await fetch('/api/auth/google-auth', { method: 'POST', headers: headers() });
+        if (!res.ok) { showToast('Error al iniciar conexión con Google', 'error'); return; }
+        const data = await res.json();
+        if (data.authUrl) { window.location.href = data.authUrl; }
+        else { showToast('No se recibió URL de autenticación', 'error'); }
+      } catch(e) {
+        console.error('iniciarOAuth2:', e);
+        showToast('Error al conectar con Google', 'error');
+      }
+    }
 </script>
 </body>
 </html>
