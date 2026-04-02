@@ -175,7 +175,7 @@ function crearOAuth2Client(tokens = null) {
 }
 
 async function obtenerAccessTokenFresco(cliente) {
-  const oauth2 = crearOAuth2Client({ refresh_token: cliente.googleAuth.refreshToken });
+  const oauth2 = crearOAuth2Client({ refresh_token: cliente.googleRefreshToken });
   try {
     const { credentials } = await oauth2.refreshAccessToken();
     // Persistir el nuevo access token
@@ -188,7 +188,7 @@ async function obtenerAccessTokenFresco(cliente) {
     console.error(`[GOOGLE AUTH] Error refrescando token para ${cliente.nombreLocal}:`, err.message);
     // Marcar como desconectado si el token es inválido
     if (err.message?.includes('invalid_grant')) {
-      await Cliente.findByIdAndUpdate(cliente._id, { 'googleAuth.conectado': false });
+      await Cliente.findByIdAndUpdate(cliente._id, { 'googleRefreshToken': null });
     }
     throw err;
   }
@@ -213,7 +213,7 @@ function starRatingToNumber(starRating) {
 }
 
 async function publicarRespuestaGoogle(cliente, googleReviewName, textoRespuesta) {
-  if (!cliente.googleAuth?.conectado || !cliente.googleAuth?.refreshToken) {
+  if (!!!cliente.googleRefreshToken || !cliente.googleRefreshToken) {
     return { ok: false, error: 'Cliente no conectado a Google Business' };
   }
   try {
@@ -276,7 +276,7 @@ async function generarRespuestaIA(textoResena, calificacion, nombreLocal) {
 }
 
 async function procesarResenasCliente(cliente) {
-  const tieneOAuth   = cliente.googleAuth?.conectado && cliente.googleAuth?.locationName;
+  const tieneOAuth   = !!cliente.googleRefreshToken && cliente.googleAuth?.locationName;
   const tienePlaceId = !!cliente.googlePlaceId;
 
   if (!tieneOAuth && !tienePlaceId) {
@@ -644,7 +644,7 @@ app.post('/auth/login', async (req, res) => {
         email: cliente.email,
         nombreLocal: cliente.nombreLocal,
         googlePlaceId: cliente.googlePlaceId,
-        googleConectado: cliente.googleAuth?.conectado || false
+        googleConectado: !!cliente.googleRefreshToken || false
       }
     });
   } catch (error) {
@@ -830,7 +830,7 @@ app.put('/admin/cliente/:clienteId/google-location', verificarAdmin, async (req,
 // Desconectar Google de un cliente
 app.delete('/admin/cliente/:clienteId/google', verificarAdmin, async (req, res) => {
   await Cliente.findByIdAndUpdate(req.params.clienteId, {
-    'googleAuth.conectado': false,
+    'googleRefreshToken': null,
     'googleAuth.refreshToken': null,
     'googleAuth.accessToken': null,
     'googleAuth.accountName': null,
@@ -1425,7 +1425,7 @@ module.exports = app;
 
 // Obtener reseñas de Google Business Profile via OAuth del cliente
 async function obtenerResenasGBP(cliente) {
-  if (!cliente.locationName || !cliente.googleAuth?.conectado || !cliente.googleAuth?.refreshToken) {
+  if (!cliente.locationName || !cliente.googleAuth.conectadocliente.googleAuth.refreshToken || !cliente.googleAuth.refreshToken) {
     return [];
   }
   try {
@@ -1443,7 +1443,7 @@ async function obtenerResenasGBP(cliente) {
       const errData = await resp.json().catch(() => ({}));
       const msg = errData.error?.message || `HTTP ${resp.status}`;
       if (resp.status === 401 || msg.includes('invalid_grant')) {
-        await Cliente.findByIdAndUpdate(cliente._id, { 'googleAuth.conectado': false });
+        await Cliente.findByIdAndUpdate(cliente._id, { 'googleRefreshToken': null });
         console.log(`[GBP] Token inválido para ${cliente.nombreLocal} — desconectado`);
       }
       throw new Error(msg);
