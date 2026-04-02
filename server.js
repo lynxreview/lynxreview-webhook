@@ -1236,7 +1236,7 @@ app.listen(PORT, () => {
 app.post('/api/auth/google-auth', async (req, res) => {
     try {
           const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-          const REDIRECT_URI = `${process.env.FRONTEND_URL}/auth/google/callback`;
+          const REDIRECT_URI = `${process.env.FRONTEND_URL}/api/auth/google/callback`;
           const SCOPES = [
                   'https://www.googleapis.com/auth/business.manage',
                   'https://www.googleapis.com/auth/drive'
@@ -1280,7 +1280,7 @@ app.get('/api/auth/google/callback', async (req, res) => {
                             client_secret: process.env.GOOGLE_CLIENT_SECRET,
                             code,
                             grant_type: 'authorization_code',
-                            redirect_uri: `${process.env.FRONTEND_URL}/auth/google/callback`,
+                            redirect_uri: `${process.env.FRONTEND_URL}/api/auth/google/callback`,
                   }),
           });
 
