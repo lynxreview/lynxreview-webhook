@@ -1417,3 +1417,195 @@ app.post('/api/reviews/sync', verificarToken, async (req, res) => {
 
 
 module.exports = app;
+
+
+// ================================================================
+// 🕕  GESTIÓN AUTOMÁTICA DE RESEÑAS CADA 6 HORAS
+// ================================================================
+
+// Obtener reseñas de Google Business Profile via OAuth del cliente
+async function obtenerResenasGBP(cliente) {
+  if (!cliente.locationName || !cliente.googleAuth?.conectado || !cliente.googleAuth?.refreshToken) {
+    return [];
+  }
+  try {
+    const auth = crearOAuth2Client({ refresh_token: cliente.googleAuth.refreshToken });
+    const tokenResp = await auth.getAccessToken();
+    const accessToken = tokenResp.token || tokenResp.res?.data?.access_token;
+    if (!accessToken) throw new Error('No se pudo obtener access token');
+
+    const url = `https://mybusiness.googleapis.com/v4/${cliente.locationName}/reviews?pageSize=50`;
+    const resp = await fetch(url, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+
+    if (!resp.ok) {
+      const errData = await resp.json().catch(() => ({}));
+      const msg = errData.error?.message || `HTTP ${resp.status}`;
+      if (resp.status === 401 || msg.includes('invalid_grant')) {
+        await Cliente.findByIdAndUpdate(cliente._id, { 'googleAuth.conectado': false });
+        console.log(`[GBP] Token inválido para ${cliente.nombreLocal} — desconectado`);
+      }
+      throw new Error(msg);
+    }
+
+    const json = await resp.json();
+    return json.reviews || [];
+  } catch (err) {
+    console.error(`[GBP] Error obteniendo reseñas de ${cliente.nombreLocal}:`, err.message);
+    return [];
+  }
+}
+
+// Generar respuesta personalizada con IA para una reseña
+async function generarRespuestaIAReview(cliente, resena) {
+  const estrellas = { ONE: 1, TWO: 2, THREE: 3, FOUR: 4, FIVE: 5 }[resena.starRating] || 3;
+  const comentario = resena.comment || '';
+  const autor = resena.reviewer?.displayName || 'cliente';
+
+  const instruccion =
+    estrellas >= 4 ? 'Agradece con entusiasmo y menciona algún detalle positivo de la reseña' :
+    estrellas <= 2 ? 'Pide disculpas con empatía, reconoce el problema y ofrece resolverlo' :
+                     'Agradece el feedback y muestra tu compromiso con la mejora';
+
+  const prompt = `Eres el responsable de "${cliente.nombreLocal}".
+El cliente ${autor} dejó ${estrellas} estrella${estrellas !== 1 ? 's' : ''}: "${comentario || '(sin comentario)'}"
+
+${instruccion}. Responde en español, máximo 100 palabras, tono profesional y cercano, sin emojis excesivos.`;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 160,
+      temperature: 0.72
+    });
+    return completion.choices[0].message.content.trim();
+  } catch (err) {
+    console.error('[IA] Error generando respuesta:', err.message);
+    return null;
+  }
+}
+
+// Ciclo completo: procesar reseñas pendientes de un cliente
+async function cicloResenasCliente(cliente) {
+  console.log(`[CICLO] → ${cliente.nombreLocal}`);
+
+  const resenasGBP = await obtenerResenasGBP(cliente);
+  const sinRespuesta = resenasGBP.filter(r => !r.reviewReply && r.name);
+
+  if (!sinRespuesta.length) {
+    console.log(`[CICLO]   Sin reseñas pendientes`);
+    return { procesadas: resenasGBP.length, respondidas: 0 };
+  }
+
+  let respondidas = 0;
+  const estrellasMapa = { ONE: 1, TWO: 2, THREE: 3, FOUR: 4, FIVE: 5 };
+
+  for (const r of sinRespuesta) {
+    // ¿Ya la tenemos respondida en nuestra DB?
+    const yaRespondida = await Resena.findOne({
+      clienteId: cliente._id,
+      googleReviewName: r.name,
+      respondida: true
+    });
+    if (yaRespondida) continue;
+
+    // Generar respuesta con IA
+    const respuesta = await generarRespuestaIAReview(cliente, r);
+    if (!respuesta) continue;
+
+    // Publicar en Google Business Profile
+    const resultado = await publicarRespuestaGoogle(cliente, r.name, respuesta);
+
+    if (resultado.ok) {
+      respondidas++;
+      await Resena.findOneAndUpdate(
+        { clienteId: cliente._id, googleReviewName: r.name },
+        {
+          clienteId: cliente._id,
+          googleReviewName: r.name,
+          autor: r.reviewer?.displayName || 'Anónimo',
+          texto: r.comment || '',
+          calificacion: estrellasMapa[r.starRating] || 3,
+          respuestaIA: respuesta,
+          respondida: true,
+          fechaRespondida: new Date(),
+          fuente: 'google_maps'
+        },
+        { upsert: true, new: true }
+      );
+      console.log(`[CICLO]   ✅ Respondida reseña de ${r.reviewer?.displayName || 'Anónimo'}`);
+    } else {
+      console.error(`[CICLO]   ❌ No se pudo publicar:`, resultado.error);
+    }
+
+    // Pausa anti rate-limit
+    await new Promise(res => setTimeout(res, 1500));
+  }
+
+  console.log(`[CICLO]   ${respondidas}/${sinRespuesta.length} respondidas`);
+  return { procesadas: resenasGBP.length, respondidas };
+}
+
+// 🕕 Cron: ejecutar cada 6 horas (timezone España)
+cron.schedule('0 */6 * * *', async () => {
+  const ts = new Date().toISOString();
+  console.log(`\n[CRON 6H] [${ts}] Iniciando ciclo automático de reseñas...`);
+
+  try {
+    const clientes = await Cliente.find({
+      'googleAuth.conectado': true,
+      'googleAuth.refreshToken': { $exists: true, $ne: null }
+    });
+
+    console.log(`[CRON 6H] Clientes con Google conectado: ${clientes.length}`);
+    let totalRespondidas = 0;
+
+    for (const cliente of clientes) {
+      try {
+        const { respondidas } = await cicloResenasCliente(cliente);
+        totalRespondidas += respondidas;
+        await new Promise(r => setTimeout(r, 3000)); // pausa entre clientes
+      } catch (err) {
+        console.error(`[CRON 6H] Error con ${cliente.nombreLocal}:`, err.message);
+      }
+    }
+
+    console.log(`[CRON 6H] ✅ Ciclo terminado — ${totalRespondidas} respuestas publicadas\n`);
+  } catch (err) {
+    console.error('[CRON 6H] Error crítico:', err.message);
+  }
+}, { timezone: 'Europe/Madrid' });
+
+// Endpoint admin: disparar ciclo manualmente
+app.post('/admin/ciclo-resenas', verificarAdmin, async (req, res) => {
+  const { clienteId } = req.body;
+  try {
+    if (clienteId) {
+      const cliente = await Cliente.findById(clienteId);
+      if (!cliente) return res.status(404).json({ error: 'Cliente no encontrado' });
+      const resultado = await cicloResenasCliente(cliente);
+      return res.json({ ok: true, ...resultado });
+    }
+
+    const clientes = await Cliente.find({
+      'googleAuth.conectado': true,
+      'googleAuth.refreshToken': { $exists: true, $ne: null }
+    });
+
+    let totalRespondidas = 0;
+    for (const c of clientes) {
+      try {
+        const { respondidas } = await cicloResenasCliente(c);
+        totalRespondidas += respondidas;
+        await new Promise(r => setTimeout(r, 2000));
+      } catch (e) {
+        console.error(`Error con ${c.nombreLocal}:`, e.message);
+      }
+    }
+    return res.json({ ok: true, clientesProcesados: clientes.length, totalRespondidas });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
