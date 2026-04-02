@@ -690,7 +690,7 @@
     }
 
         // =========== OAUTH2 GOOGLE ===========
-        async     async function checkGoogleStatus() {
+        async function checkGoogleStatus() {
       try {
         const res = await fetch('/api/auth/google-status', { headers: headers() });
         if (!res.ok) return;
