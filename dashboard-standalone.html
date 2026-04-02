@@ -385,9 +385,25 @@
         }
 
         async function connectGoogle() {
-            // Redirigir a Google OAuth
-            window.location.href = '/auth/google';
-        }
+            const token = localStorage.getItem('token');
+                    try {
+                        const response = await fetch('/api/auth/google-auth', {
+                                                method: 'POST',
+                                                headers: {
+                                                                            'Authorization': `Bearer ${token}`,
+                                                                            'Content-Type': 'application/json'
+                                                }
+                        });
+                                        const data = await response.json();
+                                        if (data.authUrl) {
+                                                                window.location.href = data.authUrl;
+                                        } else {
+                                                                showMessage('Error al iniciar autenticación', 'error');
+                                        }
+                    } catch (error) {
+                                        showMessage('Error al conectar con Google', 'error');
+                    }
+                    }
 
         async function refreshReviews() {
             const reviewsList = document.getElementById('reviewsList');
