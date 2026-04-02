@@ -1609,3 +1609,6 @@ app.post('/admin/ciclo-resenas', verificarAdmin, async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
+// Load Reviews Management Module
+const reviewsModule = require('./reviews.js');
+reviewsModule(app, mongoose, openai, google, Cliente);
