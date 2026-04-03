@@ -131,7 +131,7 @@
                         Conectar con Google Business Profile
                     </button>
                     <button class="btn btn-secondary" id="refreshBtn" onclick="refreshReviews()" style="display: none;">
-                        Actualizar Resenas
+                        Actualizar Reseñas
                     </button>
                 </div>
             </div>
@@ -139,7 +139,7 @@
                 <h2>Estadisticas</h2>
                 <div class="stat-box">
                     <div class="number" id="totalReviews">0</div>
-                    <div class="label">Resenas Totales</div>
+                    <div class="label">Reseñas Totales</div>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div class="stat-box" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
@@ -157,7 +157,7 @@
                 <div class="stats-grid">
                     <div class="stat-box-sm month">
                         <div class="num" id="monthReviews">0</div>
-                        <div class="lbl">Resenas este mes</div>
+                        <div class="lbl">Reseñas este mes</div>
                     </div>
                     <div class="stat-box-sm month">
                         <div class="num" id="monthAvg">-</div>
@@ -170,21 +170,21 @@
                 </div>
             </div>
             <div class="card reviews-container">
-                <h2>Tus Resenas</h2>
+                <h2>Tus Reseñas</h2>
                 <div class="client-tabs">
-                    <button class="client-tab-btn active" onclick="switchClientTab('reviews')">&#128196; Resenas</button>
+                    <button class="client-tab-btn active" onclick="switchClientTab('reviews')">&#128196; Reseñas</button>
                     <button class="client-tab-btn" onclick="switchClientTab('tendencias')">&#128202; Tendencias</button>
                 </div>
                 <div id="clientTab-reviews" class="client-tab-content active">
                 <div id="reviewsList">
                     <div class="loading">
-                        <p>Conecta con Google Business para ver tus resenas</p>
+                        <p>Conecta con Google Business para ver tus reseñas</p>
                     </div>
                 </div>
                 </div><!-- end clientTab-reviews -->
                 <div id="clientTab-tendencias" class="client-tab-content">
                     <div id="tendenciasContent">
-                        <p class="tend-empty">Carga tus resenas para ver tendencias</p>
+                        <p class="tend-empty">Carga tus reseñas para ver tendencias</p>
                     </div>
                 </div>
             </div>
@@ -249,7 +249,7 @@
 
         async function refreshReviews() {
             const reviewsList = document.getElementById('reviewsList');
-            reviewsList.innerHTML = '<div class="loading"><div class="spinner"></div><p>Obteniendo resenas...</p></div>';
+            reviewsList.innerHTML = '<div class="loading"><div class="spinner"></div><p>Obteniendo reseñas...</p></div>';
             try {
                 const response = await fetch('/api/reviews', {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -258,19 +258,19 @@
                 if (data.success) {
                     displayReviews(data.reviews);
                     updateStats(data.reviews);
-                    showMessage('Resenas actualizadas correctamente', 'success');
+                    showMessage('Reseñas actualizadas correctamente', 'success');
                 } else {
                     showMessage('Error: ' + data.error, 'error');
                 }
             } catch (error) {
-                showMessage('Error al obtener resenas: ' + error.message, 'error');
+                showMessage('Error al obtener reseñas: ' + error.message, 'error');
             }
         }
 
         function displayReviews(reviews) {
             const reviewsList = document.getElementById('reviewsList');
             if (!reviews || reviews.length === 0) {
-                reviewsList.innerHTML = '<p style="text-align: center; color: #999;">No hay resenas disponibles</p>';
+                reviewsList.innerHTML = '<p style="text-align: center; color: #999;">No hay reseñas disponibles</p>';
                 return;
             }
             reviewsList.innerHTML = reviews.map(review => `
@@ -356,7 +356,7 @@
             const el = document.getElementById('tendenciasContent');
             if (!el) return;
             if (!reviews || reviews.length === 0) {
-                el.innerHTML = '<p class="tend-empty">No hay resenas para analizar</p>';
+                el.innerHTML = '<p class="tend-empty">No hay reseñas para analizar</p>';
                 return;
             }
             const posKws = getTopKeywords(reviews, 'pos', 8);
@@ -372,11 +372,11 @@
 
             el.innerHTML = `
                 <div class="tend-section">
-                    <h3 class="pos">&#128994; Temas en resenas positivas (4-5 estrellas)</h3>
+                    <h3 class="pos">&#128994; Temas en reseñas positivas (4-5 estrellas)</h3>
                     <div class="keyword-list">${badgePos}</div>
                 </div>
                 <div class="tend-section">
-                    <h3 class="neg">&#128308; Temas en resenas negativas (1-2 estrellas)</h3>
+                    <h3 class="neg">&#128308; Temas en reseñas negativas (1-2 estrellas)</h3>
                     <div class="keyword-list">${badgeNeg}</div>
                 </div>
             `;
