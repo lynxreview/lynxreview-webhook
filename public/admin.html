@@ -541,10 +541,10 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>ð¨âð¼ Panel Administrador LynxReview</h1>
+            <h1> Panel Administrador LynxReview</h1>
             <div class="header-actions">
-                <span class="stat-badge" id="pendingBadge">â³ 0 pendientes</span>
-                <button class="logout-btn" onclick="logout()">Cerrar sesiÃ³n</button>
+                <span class="stat-badge" id="pendingBadge"> 0 pendientes</span>
+                <button class="logout-btn" onclick="logout()">Cerrar sesi&oacute;n</button>
             </div>
         </div>
 
@@ -571,32 +571,31 @@
                     <option value="published">Publicadas</option>
                 </select>
             </div>
-            <button class="btn-refresh" onclick="loadReviews()">ð Actualizar</button>
+            <button class="btn-refresh" onclick="loadReviews()"> Actualizar</button>
         </div>
 
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('reviews')">ð Respuestas Pendientes</button>
-            <button class="tab-btn" onclick="switchTab('qr')">ð± Generador QR</button>
+            <button class="tab-btn active" onclick="switchTab('reviews')"> Respuestas Pendientes</button>
+            <button class="tab-btn" onclick="switchTab('qr')"> Generador QR</button>
         </div>
 
         <div id="reviews-tab" class="tab-content active">
             <div id="reviewsList">
                 <div class="loading">
                     <div class="spinner"></div>
-                    <p>Cargando reseÃ±as pendientes...</p>
+                    <p>Cargando rese&ntilde;as pendientes...</p>
                 </div>
             </div>
         </div>
 
         <div id="qr-tab" class="tab-content">
             <div class="qr-section">
-                <h3>âï¸ Controles</h3>
+                <h3> Controles</h3>
                 <div class="qr-controls">
                     <div class="control-group">
                         <label>Generar Nuevo QR</label>
                         <input type="text" id="qrInput" placeholder="Escribe texto o URL para el QR..." />
-                        <button class="btn btn-refresh" onclick="generateQR()" style="margin-top: 10px;">â© Generar QR</button>
-                    </div>       <button class="btn btn-refresh" onclick="generateQR()" style="margin-top: 10px;">â Generar QR</button>
+                        <button class="btn btn-refresh" onclick="generateQR()" style="margin-top: 10px;">+ Generar QR</button>
                     </div>
                     <div class="control-group">
                         <label>Seleccionar QR</label>
@@ -607,19 +606,19 @@
                     <div class="control-group">
                         <label>URL de Google Maps</label>
                         <input type="text" id="mapsUrl" placeholder="https://maps.app.goo.gl/xxxxx" />
-                        <button class="btn btn-refresh" onclick="saveMapsUrl()" style="margin-top: 10px;">ð¾ Guardar URL</button>
+                        <button class="btn btn-refresh" onclick="saveMapsUrl()" style="margin-top: 10px;"> Guardar URL</button>
                     </div>
                 </div>
 
-                <h3 style="margin-top: 30px;">ðï¸ Vista Previa</h3>
+                <h3 style="margin-top: 30px;"> Vista Previa</h3>
                 <div class="qr-preview" id="qrPreview">
                     <div class="qr-preview-empty">Selecciona un QR para previsualizar</div>
                 </div>
 
-                <h3 style="margin-top: 30px;">ð¦ QRs Activos</h3>
+                <h3 style="margin-top: 30px;"> QRs Activos</h3>
                 <div class="qr-list" id="qrList">
                     <div style="grid-column: 1 / -1; text-align: center; color: #999; padding: 30px;">
-                        No hay QRs generados aÃºn
+                        No hay QRs generados a&uacute;n
                     </div>
                 </div>
             </div>
@@ -662,7 +661,7 @@
                     showMessage('Error: ' + data.error, 'error');
                 }
             } catch (error) {
-                showMessage('Error al cargar reseÃ±as: ' + error.message, 'error');
+                showMessage('Error al cargar rese&ntilde;as: ' + error.message, 'error');
             }
         }
 
@@ -672,8 +671,8 @@
             if (!filteredReviews || filteredReviews.length === 0) {
                 reviewsList.innerHTML = `
                     <div class="empty-state">
-                        <h2>â¨ Â¡Listo!</h2>
-                        <p>No hay reseÃ±as pendientes de aprobaciÃ³n en este momento</p>
+                        <h2> Listo!</h2>
+                        <p>No hay rese&ntilde;as pendientes de aprobacion en este momento</p>
                     </div>
                 `;
                 return;
@@ -685,18 +684,18 @@
                         <div class="review-info">
                             <h3><span class="customer-name">${escapeHtml(review.reviewerName || 'Cliente')}</span></h3>
                             <div class="review-meta">
-                                <span>ð§ ${review.reviewerEmail || 'N/A'}</span>
-                                <span>ð ${new Date(review.reviewDate).toLocaleDateString('es-ES')}</span>
+                                <span> ${review.reviewerEmail || 'N/A'}</span>
+                                <span> ${new Date(review.reviewDate).toLocaleDateString('es-ES')}</span>
                                 <span>Cliente: ${review.clienteId}</span>
                             </div>
                         </div>
-                        <div class="rating-display">${'â­'.repeat(review.rating)}</div>
+                        <div class="rating-display">${'*'.repeat(review.rating)}</div>
                     </div>
 
                     <div class="review-text">${escapeHtml(review.reviewText)}</div>
 
                     <div class="response-section">
-                        <h4>ð¬ Respuesta Propuesta (por IA)</h4>
+                        <h4> Respuesta Propuesta (por IA)</h4>
                         <div class="response-text" id="proposedResponse-${review._id}">
                             ${escapeHtml(review.proposedResponse)}
                         </div>
@@ -709,15 +708,15 @@ ${escapeHtml(review.proposedResponse)}</textarea>
                     </div>
 
                     <div class="actions">
-                        <button class="btn btn-edit" onclick="toggleEditMode('${review._id}')">âï¸ Editar respuesta</button>
-                        <button class="btn btn-approve" onclick="approveReview('${review._id}')">â Aprobar y publicar</button>
-                        <button class="btn btn-deny" onclick="showDenyReason('${review._id}')">â Denegar</button>
+                        <button class="btn btn-edit" onclick="toggleEditMode('${review._id}')"> Editar respuesta</button>
+                        <button class="btn btn-approve" onclick="approveReview('${review._id}')"> Aprobar y publicar</button>
+                        <button class="btn btn-deny" onclick="showDenyReason('${review._id}')">X Denegar</button>
                     </div>
 
                     <div id="denyForm-${review._id}" style="display: none; margin-top: 15px; padding: 15px; background: #fff5f5; border-radius: 5px;">
-                        <textarea class="textarea" id="denyReason-${review._id}" placeholder="Â¿Por quÃ© denegar esta respuesta?"></textarea>
+                        <textarea class="textarea" id="denyReason-${review._id}" placeholder="Por que denegar esta respuesta?"></textarea>
                         <div style="margin-top: 10px; display: flex; gap: 10px;">
-                            <button class="btn btn-deny" onclick="denyReview('${review._id}')">Confirmar denegaciÃ³n</button>
+                            <button class="btn btn-deny" onclick="denyReview('${review._id}')">Confirmar denegaci&oacute;n</button>
                             <button class="btn btn-secondary" onclick="hideDenyReason('${review._id}')">Cancelar</button>
                         </div>
                     </div>
@@ -763,7 +762,7 @@ ${escapeHtml(review.proposedResponse)}</textarea>
                 const data = await approveResponse.json();
 
                 if (data.success) {
-                    showMessage('â Respuesta aprobada y publicada en Google', 'success');
+                    showMessage(' Respuesta aprobada y publicada en Google', 'success');
                     setTimeout(() => loadReviews(), 1500);
                 } else {
                     showMessage('Error: ' + data.error, 'error');
@@ -789,7 +788,7 @@ ${escapeHtml(review.proposedResponse)}</textarea>
                 const data = await denyResponse.json();
 
                 if (data.success) {
-                    showMessage('â ReseÃ±a denegada', 'success');
+                    showMessage('X Resena denegada', 'success');
                     setTimeout(() => loadReviews(), 1500);
                 } else {
                     showMessage('Error: ' + data.error, 'error');
@@ -815,7 +814,7 @@ ${escapeHtml(review.proposedResponse)}</textarea>
         function updateBadge() {
             const pending = allReviews.filter(r => r.status === 'pending_response').length;
             const badge = document.getElementById('pendingBadge');
-            badge.textContent = `â³ ${pending} pendientes`;
+            badge.textContent = ` ${pending} pendientes`;
             badge.classList.toggle('high', pending > 0);
         }
 
@@ -874,7 +873,7 @@ ${escapeHtml(review.proposedResponse)}</textarea>
             document.getElementById('qrInput').value = '';
             loadQRList();
             selectQRById(qrId);
-            showMessage('â QR generado exitosamente', 'success');
+            showMessage(' QR generado exitosamente', 'success');
         }
 
         function loadQRList() {
@@ -886,7 +885,7 @@ ${escapeHtml(review.proposedResponse)}</textarea>
             let listHTML = '';
 
             if (Object.keys(qrCodes).length === 0) {
-                list.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #999; padding: 30px;">No hay QRs generados aÃºn</div>';
+                list.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #999; padding: 30px;">No hay QRs generados a&uacute;n</div>';
                 return;
             }
 
@@ -898,7 +897,7 @@ ${escapeHtml(review.proposedResponse)}</textarea>
                     <div class="qr-item ${currentQRId === id ? 'active' : ''}" onclick="selectQRById('${id}')" id="qr-item-${id}">
                         <div id="qr-code-${id}" style="margin-bottom: 10px;"></div>
                         <div class="qr-item-name" title="${qr.data}">${label}</div>
-                        <div class="qr-item-delete" onclick="deleteQR('${id}', event)">â Eliminar</div>
+                        <div class="qr-item-delete" onclick="deleteQR('${id}', event)">X Eliminar</div>
                     </div>
                 `;
             });
@@ -962,7 +961,7 @@ ${escapeHtml(review.proposedResponse)}</textarea>
 
         function deleteQR(id, event) {
             event.stopPropagation();
-            if (confirm('Â¿EstÃ¡s seguro de que deseas eliminar este QR?')) {
+            if (confirm('Esta seguro de que deseas eliminar este QR?')) {
                 delete qrCodes[id];
                 localStorage.setItem('qrCodes', JSON.stringify(qrCodes));
 
@@ -973,7 +972,7 @@ ${escapeHtml(review.proposedResponse)}</textarea>
                 }
 
                 loadQRList();
-                showMessage('â QR eliminado', 'success');
+                showMessage(' QR eliminado', 'success');
             }
         }
 
@@ -991,7 +990,7 @@ ${escapeHtml(review.proposedResponse)}</textarea>
 
             qrCodes[currentQRId].mapsUrl = url;
             localStorage.setItem('qrCodes', JSON.stringify(qrCodes));
-            showMessage('â URL de Google Maps guardada', 'success');
+            showMessage(' URL de Google Maps guardada', 'success');
         }
     </script>
 </body>
