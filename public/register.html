@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LynxReview - Crear Cuenta</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .auth-container {
+            background: white; border-radius: 15px; padding: 40px;
+            width: 100%; max-width: 480px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .logo { text-align: center; margin-bottom: 25px; }
+        .logo h1 { color: #667eea; font-size: 28px; margin-bottom: 5px; }
+        .logo p { color: #999; font-size: 14px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-weight: 600; color: #333; margin-bottom: 6px; font-size: 13px; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 11px 14px; border: 2px solid #e0e0e0; border-radius: 8px;
+            font-size: 14px; transition: border-color 0.3s; font-family: inherit;
+        }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #667eea; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .plan-info {
+            background: #f0f4ff; padding: 12px; border-radius: 8px; margin-bottom: 20px;
+            font-size: 13px; color: #4a5568; border-left: 4px solid #667eea;
+        }
+        .btn-primary {
+            width: 100%; padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600;
+            cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .switch-auth { text-align: center; margin-top: 20px; font-size: 14px; color: #666; }
+        .switch-auth a { color: #667eea; text-decoration: none; font-weight: 600; }
+        .error-msg {
+            background: #f8d7da; color: #721c24; padding: 12px; border-radius: 8px;
+            margin-bottom: 15px; font-size: 14px; display: none;
+        }
+        @media (max-width: 500px) { .form-row { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="logo">
+            <h1>LynxReview</h1>
+            <p>Crea tu cuenta para acceder al Panel de Cliente</p>
+        </div>
+
+        <div class="plan-info" id="planInfo" style="display:none;"></div>
+        <div id="errorMsg" class="error-msg"></div>
+
+        <form id="registerForm" onsubmit="handleRegister(event)">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nombre del propietario</label>
+                    <input type="text" id="ownerName" required placeholder="Tu nombre completo">
+                </div>
+                <div class="form-group">
+                    <label>Nombre del negocio</label>
+                    <input type="text" id="businessName" required placeholder="Nombre de tu local">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Correo electronico</label>
+                    <input type="email" id="email" required placeholder="tu@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Telefono</label>
+                    <input type="tel" id="phone" required placeholder="+34 612 345 678">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Contrasena</label>
+                    <input type="password" id="password" required minlength="6" placeholder="Minimo 6 caracteres">
+                </div>
+                <div class="form-group">
+                    <label>Confirmar contrasena</label>
+                    <input type="password" id="confirmPassword" required placeholder="Repite la contrasena">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Plan contratado</label>
+                <select id="planId">
+                    <option value="basic">Basico - 19 EUR/mes</option>
+                    <option value="plus" selected>Plus - 39 EUR/mes (Recomendado)</option>
+                    <option value="premium">Premium - 59 EUR/mes</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn-primary" id="submitBtn">Crear Cuenta</button>
+        </form>
+
+        <div class="switch-auth">
+            <p>Ya tienes cuenta? <a href="/">Iniciar sesion</a></p>
+        </div>
+    </div>
+
+    <script>
+        // Pre-fill plan from URL params (from Stripe redirect)
+        const params = new URLSearchParams(window.location.search);
+        const planFromUrl = params.get('plan');
+        const sessionId = params.get('session_id');
+
+        if (planFromUrl) {
+            document.getElementById('planId').value = planFromUrl;
+            const planNames = { basic: 'Basico (19 EUR/mes)', plus: 'Plus (39 EUR/mes)', premium: 'Premium (59 EUR/mes)' };
+            const planInfo = document.getElementById('planInfo');
+            planInfo.innerHTML = `Pago completado. Plan seleccionado: <strong>${planNames[planFromUrl] || planFromUrl}</strong>`;
+            planInfo.style.display = 'block';
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Creando cuenta...';
+
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (password !== confirmPassword) {
+                showError('Las contrasenas no coinciden');
+                btn.disabled = false;
+                btn.textContent = 'Crear Cuenta';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: document.getElementById('email').value,
+                        password: password,
+                        businessName: document.getElementById('businessName').value,
+                        ownerName: document.getElementById('ownerName').value,
+                        phone: document.getElementById('phone').value,
+                        planId: document.getElementById('planId').value,
+                        stripeSessionId: sessionId || null,
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Auto-login and redirect to dashboard
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    window.location.href = '/dashboard.html';
+                } else {
+                    showError(data.error || 'Error al crear cuenta');
+                }
+            } catch (error) {
+                showError('Error de conexion. Intenta de nuevo.');
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Crear Cuenta';
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('errorMsg');
+            el.textContent = msg;
+            el.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
