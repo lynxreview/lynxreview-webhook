@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LynxReview - Iniciar Sesion</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .auth-container {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .logo { text-align: center; margin-bottom: 30px; }
+        .logo h1 { color: #667eea; font-size: 32px; margin-bottom: 5px; }
+        .logo p { color: #999; font-size: 14px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: 600; color: #333; margin-bottom: 8px; font-size: 14px; }
+        .form-group input {
+            width: 100%; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 8px;
+            font-size: 15px; transition: border-color 0.3s; font-family: inherit;
+        }
+        .form-group input:focus { outline: none; border-color: #667eea; }
+        .btn-primary {
+            width: 100%; padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600;
+            cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .switch-auth { text-align: center; margin-top: 20px; font-size: 14px; color: #666; }
+        .switch-auth a { color: #667eea; text-decoration: none; font-weight: 600; }
+        .switch-auth a:hover { text-decoration: underline; }
+        .error-msg { background: #f8d7da; color: #721c24; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; display: none; }
+        .success-msg { background: #d4edda; color: #155724; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; display: none; }
+        .admin-link { text-align: center; margin-top: 15px; }
+        .admin-link a { color: #999; font-size: 12px; text-decoration: none; }
+        .admin-link a:hover { color: #667eea; }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="logo">
+            <h1>LynxReview</h1>
+            <p>Panel de Cliente</p>
+        </div>
+
+        <div id="errorMsg" class="error-msg"></div>
+        <div id="successMsg" class="success-msg"></div>
+
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label>Correo electronico</label>
+                <input type="email" id="email" required placeholder="tu@email.com" autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label>Contrasena</label>
+                <input type="password" id="password" required placeholder="Tu contrasena" autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn-primary" id="submitBtn">Iniciar Sesion</button>
+        </form>
+
+        <div class="switch-auth">
+            <p>No tienes cuenta? <a href="/register.html">Crear cuenta</a></p>
+        </div>
+
+        <div class="admin-link">
+            <a href="/admin-login.html">Acceso administrador</a>
+        </div>
+    </div>
+
+    <script>
+        // If already logged in, redirect to dashboard
+        if (localStorage.getItem('token')) {
+            window.location.href = '/dashboard.html';
+        }
+
+        // Check URL params for messages
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('registered') === 'true') {
+            showSuccess('Cuenta creada exitosamente. Inicia sesion.');
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Iniciando sesion...';
+            hideMessages();
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: document.getElementById('email').value,
+                        password: document.getElementById('password').value
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    window.location.href = '/dashboard.html';
+                } else {
+                    showError(data.error || 'Credenciales incorrectas');
+                }
+            } catch (error) {
+                showError('Error de conexion. Intenta de nuevo.');
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Iniciar Sesion';
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('errorMsg');
+            el.textContent = msg;
+            el.style.display = 'block';
+        }
+        function showSuccess(msg) {
+            const el = document.getElementById('successMsg');
+            el.textContent = msg;
+            el.style.display = 'block';
+        }
+        function hideMessages() {
+            document.getElementById('errorMsg').style.display = 'none';
+            document.getElementById('successMsg').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
