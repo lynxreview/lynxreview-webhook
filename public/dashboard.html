@@ -79,6 +79,33 @@
         }
         .stat-box .number { font-size: 32px; font-weight: bold; margin-bottom: 5px; }
         .stat-box .label { font-size: 14px; opacity: 0.9; }
+
+        /* ---- Month stats & keyword ---- */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-top: 12px; }
+        .stat-box-sm { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 16px; border-radius: 10px; text-align: center; }
+        .stat-box-sm .num { font-size: 24px; font-weight: bold; }
+        .stat-box-sm .lbl { font-size: 12px; opacity: 0.85; margin-top: 4px; }
+        .stat-box-sm.month { background: linear-gradient(135deg, #11998e, #38ef7d); }
+        .stat-box-sm.keyword { background: linear-gradient(135deg, #f7971e, #ffd200); color: #333; }
+
+        /* ---- Client Tabs ---- */
+        .client-tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 2px solid #e8e8e8; }
+        .client-tab-btn { background: none; border: none; padding: 10px 20px; font-size: 15px; cursor: pointer; color: #777; border-bottom: 3px solid transparent; margin-bottom: -2px; font-weight: 500; transition: all 0.2s; }
+        .client-tab-btn.active { color: #667eea; border-bottom-color: #667eea; }
+        .client-tab-content { display: none; }
+        .client-tab-content.active { display: block; }
+
+        /* ---- Tendencias ---- */
+        .tend-section { margin-bottom: 24px; }
+        .tend-section h3 { font-size: 15px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .tend-section h3.pos { color: #28a745; }
+        .tend-section h3.neg { color: #dc3545; }
+        .keyword-list { display: flex; flex-wrap: wrap; gap: 8px; }
+        .kw-badge { padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+        .kw-badge.pos { background: #d4edda; color: #155724; }
+        .kw-badge.neg { background: #f8d7da; color: #721c24; }
+        .kw-badge .cnt { font-size: 11px; background: rgba(0,0,0,0.12); padding: 2px 6px; border-radius: 10px; }
+        .tend-empty { color: #999; font-size: 14px; text-align: center; padding: 30px; }
         @media (max-width: 768px) {
             .main-grid { grid-template-columns: 1fr; }
             .header { flex-direction: column; gap: 15px; text-align: center; }
@@ -125,11 +152,39 @@
                     </div>
                 </div>
             </div>
+            <!-- Mes actual stats -->
+            <div class="card" style="grid-column:1/-1">
+                <div class="stats-grid">
+                    <div class="stat-box-sm month">
+                        <div class="num" id="monthReviews">0</div>
+                        <div class="lbl">Resenas este mes</div>
+                    </div>
+                    <div class="stat-box-sm month">
+                        <div class="num" id="monthAvg">-</div>
+                        <div class="lbl">Media este mes</div>
+                    </div>
+                    <div class="stat-box-sm keyword">
+                        <div class="num" id="topKeyword" style="font-size:15px;word-break:break-word">-</div>
+                        <div class="lbl">Palabra clave top</div>
+                    </div>
+                </div>
+            </div>
             <div class="card reviews-container">
                 <h2>Tus Resenas</h2>
+                <div class="client-tabs">
+                    <button class="client-tab-btn active" onclick="switchClientTab('reviews')">&#128196; Resenas</button>
+                    <button class="client-tab-btn" onclick="switchClientTab('tendencias')">&#128202; Tendencias</button>
+                </div>
+                <div id="clientTab-reviews" class="client-tab-content active">
                 <div id="reviewsList">
                     <div class="loading">
                         <p>Conecta con Google Business para ver tus resenas</p>
+                    </div>
+                </div>
+                </div><!-- end clientTab-reviews -->
+                <div id="clientTab-tendencias" class="client-tab-content">
+                    <div id="tendenciasContent">
+                        <p class="tend-empty">Carga tus resenas para ver tendencias</p>
                     </div>
                 </div>
             </div>
@@ -245,9 +300,86 @@
         }
 
         function updateStats(reviews) {
-            document.getElementById('totalReviews').textContent = reviews.length;
+            const total = reviews.length;
+            document.getElementById('totalReviews').textContent = total;
             document.getElementById('fiveStarCount').textContent = reviews.filter(r => r.rating === 5).length;
             document.getElementById('lowRatingCount').textContent = reviews.filter(r => r.rating <= 4).length;
+
+            // Month stats
+            const now = new Date();
+            const thisMonth = reviews.filter(r => {
+                const d = new Date(r.createdAt || r.date || 0);
+                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+            });
+            document.getElementById('monthReviews').textContent = thisMonth.length;
+            if (thisMonth.length > 0) {
+                const avg = thisMonth.reduce((s, r) => s + (r.rating || 0), 0) / thisMonth.length;
+                document.getElementById('monthAvg').textContent = avg.toFixed(1) + ' ★';
+            } else {
+                document.getElementById('monthAvg').textContent = '-';
+            }
+
+            // Top keyword
+            const kws = getTopKeywords(reviews, null, 1);
+            document.getElementById('topKeyword').textContent = kws.length ? kws[0].word : '-';
+
+            // Tendencias
+            renderTendencias(reviews);
+        }
+
+        function getTopKeywords(reviews, sentiment, topN) {
+            const STOPWORDS = new Set(['de','la','el','en','que','y','a','los','las','un','una','con','por','se','su','del','al','es','son','como','lo','mas','pero','si','no','ya','le','me','te','nos','les','fue','han','hay','ser','para','este','esta','esto','eso','sus','les','todo','muy','bien','mal','cuando','donde','quien','cual','cada','tambien','porque','pero','aunque','entre','sobre','hasta','desde','sin','ni','ante','bajo','tras','segun','durante']);
+            const freq = {};
+            reviews.forEach(r => {
+                if (sentiment === 'pos' && (r.rating || 0) < 4) return;
+                if (sentiment === 'neg' && (r.rating || 0) > 2) return;
+                const text = (r.reviewText || r.text || r.body || '').toLowerCase().replace(/[^a-zaoeiuaeiun0-9 ]/gi, ' ');
+                text.split(/s+/).forEach(w => {
+                    if (w.length < 3 || STOPWORDS.has(w)) return;
+                    freq[w] = (freq[w] || 0) + 1;
+                });
+            });
+            return Object.entries(freq)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, topN || 8)
+                .map(([word, count]) => ({ word, count }));
+        }
+
+        function switchClientTab(tab) {
+            document.querySelectorAll('.client-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.client-tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById('clientTab-' + tab).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        function renderTendencias(reviews) {
+            const el = document.getElementById('tendenciasContent');
+            if (!el) return;
+            if (!reviews || reviews.length === 0) {
+                el.innerHTML = '<p class="tend-empty">No hay resenas para analizar</p>';
+                return;
+            }
+            const posKws = getTopKeywords(reviews, 'pos', 8);
+            const negKws = getTopKeywords(reviews, 'neg', 8);
+
+            const badgePos = posKws.length
+                ? posKws.map(k => '<span class="kw-badge pos">' + k.word + ' <span class="cnt">' + k.count + '</span></span>').join('')
+                : '<span class="tend-empty">Sin datos suficientes</span>';
+
+            const badgeNeg = negKws.length
+                ? negKws.map(k => '<span class="kw-badge neg">' + k.word + ' <span class="cnt">' + k.count + '</span></span>').join('')
+                : '<span class="tend-empty">Sin datos suficientes</span>';
+
+            el.innerHTML = `
+                <div class="tend-section">
+                    <h3 class="pos">&#128994; Temas en resenas positivas (4-5 estrellas)</h3>
+                    <div class="keyword-list">${badgePos}</div>
+                </div>
+                <div class="tend-section">
+                    <h3 class="neg">&#128308; Temas en resenas negativas (1-2 estrellas)</h3>
+                    <div class="keyword-list">${badgeNeg}</div>
+                </div>
+            `;
         }
 
         function getStatusLabel(status) {
