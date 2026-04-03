@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LynxReview - Admin Login</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;
+        }
+        .auth-container {
+            background: white; border-radius: 15px; padding: 40px;
+            width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+        .logo { text-align: center; margin-bottom: 30px; }
+        .logo h1 { color: #0f3460; font-size: 28px; margin-bottom: 5px; }
+        .logo p { color: #999; font-size: 14px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: 600; color: #333; margin-bottom: 8px; font-size: 14px; }
+        .form-group input {
+            width: 100%; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 8px;
+            font-size: 15px; transition: border-color 0.3s; font-family: inherit;
+        }
+        .form-group input:focus { outline: none; border-color: #0f3460; }
+        .btn-primary {
+            width: 100%; padding: 14px; background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+            color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600;
+            cursor: pointer; transition: transform 0.2s;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(15, 52, 96, 0.4); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .error-msg {
+            background: #f8d7da; color: #721c24; padding: 12px; border-radius: 8px;
+            margin-bottom: 20px; font-size: 14px; display: none;
+        }
+        .back-link { text-align: center; margin-top: 20px; }
+        .back-link a { color: #999; font-size: 13px; text-decoration: none; }
+        .back-link a:hover { color: #0f3460; }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="logo">
+            <h1>LynxReview Admin</h1>
+            <p>Panel de Administracion</p>
+        </div>
+        <div id="errorMsg" class="error-msg"></div>
+        <form onsubmit="handleAdminLogin(event)">
+            <div class="form-group">
+                <label>Email de administrador</label>
+                <input type="email" id="email" required placeholder="admin@lynxreview.com">
+            </div>
+            <div class="form-group">
+                <label>Contrasena</label>
+                <input type="password" id="password" required placeholder="Contrasena">
+            </div>
+            <button type="submit" class="btn-primary" id="submitBtn">Acceder</button>
+        </form>
+        <div class="back-link"><a href="/">Volver al login de cliente</a></div>
+    </div>
+    <script>
+        if (localStorage.getItem('admin_token')) {
+            window.location.href = '/admin.html';
+        }
+        async function handleAdminLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Accediendo...';
+            document.getElementById('errorMsg').style.display = 'none';
+            try {
+                const res = await fetch('/api/auth/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: document.getElementById('email').value,
+                        password: document.getElementById('password').value
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    localStorage.setItem('admin_token', data.token);
+                    localStorage.setItem('token', data.token);
+                    window.location.href = '/admin.html';
+                } else {
+                    const el = document.getElementById('errorMsg');
+                    el.textContent = data.error || 'Credenciales incorrectas';
+                    el.style.display = 'block';
+                }
+            } catch (error) {
+                const el = document.getElementById('errorMsg');
+                el.textContent = 'Error de conexion';
+                el.style.display = 'block';
+            }
+            btn.disabled = false;
+            btn.textContent = 'Acceder';
+        }
+    </script>
+</body>
+</html>
