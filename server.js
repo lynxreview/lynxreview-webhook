@@ -88,9 +88,6 @@ app.get('/auth/google', (req, res) => {
   res.redirect('/api/auth/google?redirect=true');
 });
 
-// Client routes (reviews, metrics) - requires client auth
-app.use('/api/reviews', clientRoutes);
-
 // Admin routes (clients, metrics) - under /api/admin
 app.use('/api/admin', adminRoutes);
 
@@ -141,6 +138,9 @@ app.post('/api/reviews/:id/deny', adminAuth, async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
+// Client routes (reviews, metrics) - requires client auth (after admin routes)
+app.use('/api/reviews', clientRoutes);
 
 // Webhook routes
 app.use('/webhooks', webhookRoutes);
