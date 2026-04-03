@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LynxReview - Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh; padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header {
+            background: white; padding: 30px; border-radius: 10px; margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); display: flex;
+            justify-content: space-between; align-items: center;
+        }
+        .header h1 { color: #667eea; font-size: 28px; }
+        .logout-btn {
+            background: #dc3545; color: white; border: none; padding: 10px 20px;
+            border-radius: 5px; cursor: pointer; font-size: 14px;
+        }
+        .logout-btn:hover { background: #c82333; }
+        .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+        .card {
+            background: white; padding: 25px; border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .card h2 {
+            color: #333; margin-bottom: 20px; font-size: 22px;
+            border-bottom: 2px solid #667eea; padding-bottom: 10px;
+        }
+        .google-status {
+            background: #f8f9fa; padding: 15px; border-radius: 8px;
+            margin-bottom: 20px; border-left: 4px solid #ffc107;
+        }
+        .google-status.connected { border-left-color: #28a745; background: #d4edda; }
+        .google-status p { margin: 8px 0; color: #666; font-size: 14px; }
+        .google-status strong { color: #333; }
+        .button-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn {
+            padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer;
+            font-size: 14px; font-weight: 600; transition: all 0.3s ease;
+        }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5568d3; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4); }
+        .btn-success { background: #28a745; color: white; }
+        .btn-success:hover { background: #218838; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-secondary:hover { background: #5a6268; }
+        .reviews-container { grid-column: 1 / -1; }
+        .review-item {
+            background: #f8f9fa; padding: 15px; border-radius: 8px;
+            margin-bottom: 15px; border-left: 4px solid #667eea;
+        }
+        .review-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .review-rating { font-size: 18px; color: #ffc107; }
+        .review-rating.high { color: #28a745; }
+        .review-rating.low { color: #dc3545; }
+        .review-text { color: #555; margin: 10px 0; line-height: 1.5; }
+        .review-meta { font-size: 12px; color: #999; display: flex; gap: 15px; }
+        .review-status { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-approved { background: #d4edda; color: #155724; }
+        .status-published { background: #d1ecf1; color: #0c5460; }
+        .loading { text-align: center; padding: 40px; color: #667eea; }
+        .spinner {
+            border: 3px solid #f3f3f3; border-top: 3px solid #667eea; border-radius: 50%;
+            width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .error-message { background: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin-bottom: 20px; border-left: 4px solid #dc3545; }
+        .success-message { background: #d4edda; color: #155724; padding: 15px; border-radius: 5px; margin-bottom: 20px; border-left: 4px solid #28a745; }
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;
+            padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;
+        }
+        .stat-box .number { font-size: 32px; font-weight: bold; margin-bottom: 5px; }
+        .stat-box .label { font-size: 14px; opacity: 0.9; }
+        @media (max-width: 768px) {
+            .main-grid { grid-template-columns: 1fr; }
+            .header { flex-direction: column; gap: 15px; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>LynxReview - Panel de Cliente</h1>
+            <button class="logout-btn" onclick="logout()">Cerrar sesion</button>
+        </div>
+        <div id="messages"></div>
+        <div class="main-grid">
+            <div class="card">
+                <h2>Conexion con Google Business</h2>
+                <div class="google-status" id="googleStatus">
+                    <p><strong>Estado:</strong> <span id="statusText">No conectado</span></p>
+                    <p id="businessName" style="display: none;"><strong>Negocio:</strong> <span></span></p>
+                </div>
+                <div class="button-group">
+                    <button class="btn btn-primary" id="connectGoogleBtn" onclick="connectGoogle()">
+                        Conectar con Google Business Profile
+                    </button>
+                    <button class="btn btn-secondary" id="refreshBtn" onclick="refreshReviews()" style="display: none;">
+                        Actualizar Resenas
+                    </button>
+                </div>
+            </div>
+            <div class="card">
+                <h2>Estadisticas</h2>
+                <div class="stat-box">
+                    <div class="number" id="totalReviews">0</div>
+                    <div class="label">Resenas Totales</div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="stat-box" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                        <div class="number" id="fiveStarCount">0</div>
+                        <div class="label">5 Estrellas</div>
+                    </div>
+                    <div class="stat-box" style="background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);">
+                        <div class="number" id="lowRatingCount">0</div>
+                        <div class="label">4 o Menos</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card reviews-container">
+                <h2>Tus Resenas</h2>
+                <div id="reviewsList">
+                    <div class="loading">
+                        <p>Conecta con Google Business para ver tus resenas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) { window.location.href = '/'; }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('google') === 'connected') {
+            window.history.replaceState({}, '', '/dashboard.html');
+        }
+
+        window.addEventListener('DOMContentLoaded', () => { checkGoogleConnection(); });
+
+        async function checkGoogleConnection() {
+            try {
+                const response = await fetch('/api/auth/google/status', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                const statusDiv = document.getElementById('googleStatus');
+                const statusText = document.getElementById('statusText');
+                const businessName = document.getElementById('businessName');
+                const connectBtn = document.getElementById('connectGoogleBtn');
+                const refreshBtn = document.getElementById('refreshBtn');
+
+                if (data.connected) {
+                    statusDiv.classList.add('connected');
+                    statusText.textContent = 'Conectado';
+                    businessName.style.display = 'block';
+                    businessName.querySelector('span').textContent = data.businessName || 'Google Business';
+                    connectBtn.style.display = 'none';
+                    refreshBtn.style.display = 'block';
+                } else {
+                    statusDiv.classList.remove('connected');
+                    statusText.textContent = 'No conectado';
+                    connectBtn.style.display = 'block';
+                    refreshBtn.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error checking Google connection:', error);
+            }
+        }
+
+        async function connectGoogle() {
+            try {
+                const response = await fetch('/api/auth/google/start', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                if (data.success && data.authUrl) {
+                    window.location.href = data.authUrl;
+                } else {
+                    showMessage('Error al conectar con Google', 'error');
+                }
+            } catch (error) {
+                showMessage('Error de conexion: ' + error.message, 'error');
+            }
+        }
+
+        async function refreshReviews() {
+            const reviewsList = document.getElementById('reviewsList');
+            reviewsList.innerHTML = '<div class="loading"><div class="spinner"></div><p>Obteniendo resenas...</p></div>';
+            try {
+                const response = await fetch('/api/reviews', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    displayReviews(data.reviews);
+                    updateStats(data.reviews);
+                    showMessage('Resenas actualizadas correctamente', 'success');
+                } else {
+                    showMessage('Error: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Error al obtener resenas: ' + error.message, 'error');
+            }
+        }
+
+        function displayReviews(reviews) {
+            const reviewsList = document.getElementById('reviewsList');
+            if (!reviews || reviews.length === 0) {
+                reviewsList.innerHTML = '<p style="text-align: center; color: #999;">No hay resenas disponibles</p>';
+                return;
+            }
+            reviewsList.innerHTML = reviews.map(review => `
+                <div class="review-item">
+                    <div class="review-header">
+                        <div>
+                            <strong>${review.reviewerName || 'Cliente'}</strong>
+                            <div class="review-rating ${review.rating === 5 ? 'high' : review.rating <= 2 ? 'low' : ''}">
+                                ${'*'.repeat(review.rating)}
+                            </div>
+                        </div>
+                        <span class="review-status status-${review.status}">${getStatusLabel(review.status)}</span>
+                    </div>
+                    <div class="review-text">${escapeHtml(review.reviewText)}</div>
+                    ${review.publishedResponse ? `
+                        <div style="background: #e7f3ff; padding: 10px; border-radius: 5px; margin-top: 10px;">
+                            <strong style="color: #0066cc;">Tu respuesta:</strong>
+                            <p style="color: #333; margin-top: 5px;">${escapeHtml(review.publishedResponse)}</p>
+                        </div>
+                    ` : ''}
+                    <div class="review-meta">
+                        <span>${new Date(review.createdAt).toLocaleDateString('es-ES')}</span>
+                        ${review.approvedAt ? `<span>Aprobado: ${new Date(review.approvedAt).toLocaleDateString('es-ES')}</span>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateStats(reviews) {
+            document.getElementById('totalReviews').textContent = reviews.length;
+            document.getElementById('fiveStarCount').textContent = reviews.filter(r => r.rating === 5).length;
+            document.getElementById('lowRatingCount').textContent = reviews.filter(r => r.rating <= 4).length;
+        }
+
+        function getStatusLabel(status) {
+            const labels = {
+                'pending_response': 'Pendiente',
+                'approved': 'Aprobada',
+                'denied': 'Denegada',
+                'published': 'Publicada'
+            };
+            return labels[status] || status;
+        }
+
+        function showMessage(message, type) {
+            const messagesDiv = document.getElementById('messages');
+            const messageEl = document.createElement('div');
+            messageEl.className = type === 'error' ? 'error-message' : 'success-message';
+            messageEl.textContent = message;
+            messagesDiv.appendChild(messageEl);
+            setTimeout(() => messageEl.remove(), 5000);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>
