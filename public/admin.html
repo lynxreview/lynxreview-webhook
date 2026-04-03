@@ -508,6 +508,265 @@
             margin-top: 5px;
         }
 
+        /* ========== CLIENTES TABLE STYLES ========== */
+        .clients-header {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .clients-search {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .clients-search:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .clients-sort {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .clients-sort:focus {
+            border-color: #667eea;
+        }
+
+        .clients-info {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .clients-table-wrapper {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .clients-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .clients-table thead tr {
+            background: #f9fafb;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .clients-table th {
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 700;
+            color: #374151;
+            white-space: nowrap;
+        }
+
+        .clients-table th.center,
+        .clients-table td.center {
+            text-align: center;
+        }
+
+        .clients-table tbody tr {
+            border-bottom: 1px solid #f3f4f6;
+            transition: background 0.15s;
+        }
+
+        .clients-table tbody tr:hover {
+            background: #f0f4ff;
+        }
+
+        .clients-table td {
+            padding: 14px 16px;
+            vertical-align: middle;
+        }
+
+        .client-business {
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 2px;
+        }
+
+        .client-owner {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .client-email {
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .plan-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .plan-basic { background: #dbeafe; color: #1d4ed8; }
+        .plan-plus  { background: #d1fae5; color: #065f46; }
+        .plan-premium { background: #ede9fe; color: #5b21b6; }
+
+        .reviews-count {
+            display: inline-block;
+            background: #e0e7ff;
+            color: #3730a3;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .rating-stars {
+            color: #f59e0b;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        .rating-num {
+            font-size: 12px;
+            color: #6b7280;
+            margin-left: 4px;
+        }
+
+        .time-subscribed {
+            font-weight: 700;
+            color: #111827;
+            font-size: 14px;
+        }
+
+        .time-days {
+            font-size: 11px;
+            color: #9ca3af;
+        }
+
+        .renewal-date {
+            font-size: 13px;
+            color: #374151;
+        }
+
+        .google-badge-yes {
+            display: inline-block;
+            background: #d1fae5;
+            color: #065f46;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .google-badge-no {
+            display: inline-block;
+            background: #f3f4f6;
+            color: #9ca3af;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .clients-empty {
+            text-align: center;
+            padding: 50px 20px;
+            color: #9ca3af;
+        }
+
+        .clients-empty p {
+            font-size: 16px;
+        }
+
+        .clients-pagination {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .clients-pagination span {
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .pagination-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-page {
+            padding: 8px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            color: #374151;
+            transition: all 0.2s;
+        }
+
+        .btn-page:hover:not(:disabled) {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .btn-page:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 14px 16px;
+        }
+
+        .stat-card-label {
+            font-size: 12px;
+            color: #9ca3af;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card-value {
+            font-size: 24px;
+            font-weight: 800;
+            color: #111827;
+            margin-top: 4px;
+        }
+
+        .stat-card-value.purple { color: #667eea; }
+        .stat-card-value.green  { color: #10b981; }
+        .stat-card-value.blue   { color: #3b82f6; }
+        .stat-card-value.orange { color: #f59e0b; }
+
         @media (max-width: 768px) {
             .review-header {
                 grid-template-columns: 1fr;
@@ -575,8 +834,9 @@
         </div>
 
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('reviews')"> Respuestas Pendientes</button>
-            <button class="tab-btn" onclick="switchTab('qr')"> Generador QR</button>
+            <button class="tab-btn active" onclick="switchTab('reviews')">&#11088; Respuestas Pendientes</button>
+            <button class="tab-btn" onclick="switchTab('clients')">&#128101; Clientes Suscritos</button>
+            <button class="tab-btn" onclick="switchTab('qr')">&#128249; Generador QR</button>
         </div>
 
         <div id="reviews-tab" class="tab-content active">
@@ -584,6 +844,90 @@
                 <div class="loading">
                     <div class="spinner"></div>
                     <p>Cargando rese&ntilde;as pendientes...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TAB: CLIENTES SUSCRITOS ===== -->
+        <div id="clients-tab" class="tab-content">
+
+            <!-- Stats summary cards -->
+            <div class="stats-summary" id="clientsStatsSummary">
+                <div class="stat-card">
+                    <div class="stat-card-label">Activos</div>
+                    <div class="stat-card-value purple" id="statActive">â</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-label">Total Rese&#241;as</div>
+                    <div class="stat-card-value blue" id="statReviews">â</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-label">Plan Basic</div>
+                    <div class="stat-card-value" id="statBasic">â</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-label">Plan Plus</div>
+                    <div class="stat-card-value green" id="statPlus">â</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-label">Plan Premium</div>
+                    <div class="stat-card-value orange" id="statPremium">â</div>
+                </div>
+            </div>
+
+            <!-- Filters & Search -->
+            <div class="clients-header">
+                <input
+                    type="text"
+                    class="clients-search"
+                    id="clientSearch"
+                    placeholder="&#128269; Buscar por negocio, email o propietario..."
+                    oninput="onClientSearch()"
+                />
+                <select class="clients-sort" id="clientSort" onchange="loadClients()">
+                    <option value="subscriptionStartDate">&#128337; M&#225;s tiempo suscrito</option>
+                    <option value="totalReviews">&#11088; M&#225;s rese&#241;as</option>
+                    <option value="averageRating">&#11088; Mejor rating</option>
+                    <option value="businessName">&#128292; Nombre (A-Z)</option>
+                    <option value="createdAt">&#128197; M&#225;s recientes</option>
+                </select>
+                <button class="btn-refresh" onclick="loadClients()">&#8635; Actualizar</button>
+            </div>
+
+            <div class="clients-info" id="clientsInfo">Cargando clientes...</div>
+
+            <!-- Table -->
+            <div class="clients-table-wrapper">
+                <table class="clients-table">
+                    <thead>
+                        <tr>
+                            <th>Negocio</th>
+                            <th>Email</th>
+                            <th class="center">Plan</th>
+                            <th class="center">Rese&#241;as</th>
+                            <th class="center">Rating</th>
+                            <th class="center">Suscrito</th>
+                            <th class="center">Renovaci&#243;n</th>
+                            <th class="center">Google</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clientsTableBody">
+                        <tr>
+                            <td colspan="8" class="clients-empty">
+                                <div class="spinner" style="margin: 20px auto;"></div>
+                                <p>Cargando clientes...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="clients-pagination" id="clientsPagination" style="display:none;">
+                <span id="paginationInfo">P&#225;gina 1</span>
+                <div class="pagination-btns">
+                    <button class="btn-page" id="btnPrevPage" onclick="changePage(-1)" disabled>&#8592; Anterior</button>
+                    <button class="btn-page" id="btnNextPage" onclick="changePage(1)">Siguiente &#8594;</button>
                 </div>
             </div>
         </div>
@@ -837,20 +1181,7 @@ ${escapeHtml(review.proposedResponse)}</textarea>
             window.location.href = '/admin';
         }
 
-        // QR Code Functions
-        function switchTab(tabName) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-
-            // Show selected tab
-            document.getElementById(`${tabName}-tab`).classList.add('active');
-            event.target.classList.add('active');
-        }
+        // QR Code Functions (switchTab se define al final del script, unificado)
 
         function generateQR() {
             const input = document.getElementById('qrInput').value.trim();
@@ -990,7 +1321,185 @@ ${escapeHtml(review.proposedResponse)}</textarea>
 
             qrCodes[currentQRId].mapsUrl = url;
             localStorage.setItem('qrCodes', JSON.stringify(qrCodes));
-            showMessage(' URL de Google Maps guardada', 'success');
+            showMessage('URL de Google Maps guardada', 'success');
+        }
+
+        // ============================================================
+        // CLIENTES SUSCRITOS â lÃ³gica completa
+        // ============================================================
+
+        let clientsData = [];
+        let clientsCurrentPage = 1;
+        let clientsTotalPages = 1;
+        let clientsTotal = 0;
+        const CLIENTS_LIMIT = 50;
+        let clientSearchTimer = null;
+
+        // Lanzar bÃºsqueda con debounce para no saturar el API
+        function onClientSearch() {
+            clearTimeout(clientSearchTimer);
+            clientSearchTimer = setTimeout(() => {
+                clientsCurrentPage = 1;
+                loadClients();
+            }, 350);
+        }
+
+        async function loadClients() {
+            const tbody = document.getElementById('clientsTableBody');
+            tbody.innerHTML = `<tr><td colspan="8" class="clients-empty"><div class="spinner" style="margin:20px auto;"></div><p>Cargando...</p></td></tr>`;
+            document.getElementById('clientsInfo').textContent = 'Cargando clientes...';
+
+            try {
+                const search  = document.getElementById('clientSearch').value.trim();
+                const sortBy  = document.getElementById('clientSort').value;
+                const skip    = (clientsCurrentPage - 1) * CLIENTS_LIMIT;
+
+                const params = new URLSearchParams({
+                    limit:    CLIENTS_LIMIT,
+                    skip,
+                    sortBy,
+                    onlyActive: 'true'
+                });
+                if (search) params.append('search', search);
+
+                const res  = await fetch(`/api/admin/clients?${params}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                if (!data.success) throw new Error(data.error || 'Error del servidor');
+
+                clientsData       = data.clients;
+                clientsTotal      = data.total;
+                clientsTotalPages = data.pagination ? data.pagination.pages : Math.ceil(clientsTotal / CLIENTS_LIMIT);
+
+                renderClientsTable(clientsData);
+                updateClientStats(clientsData);
+                updateClientsPagination();
+
+                const from = skip + 1;
+                const to   = Math.min(skip + clientsData.length, clientsTotal);
+                document.getElementById('clientsInfo').textContent =
+                    `Mostrando ${from}â${to} de ${clientsTotal} clientes activos`;
+
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="8" class="clients-empty"><p style="color:#dc3545;">&#9888; Error: ${escapeHtml(err.message)}</p></td></tr>`;
+                document.getElementById('clientsInfo').textContent = 'Error al cargar clientes.';
+            }
+        }
+
+        function renderClientsTable(clients) {
+            const tbody = document.getElementById('clientsTableBody');
+
+            if (!clients || clients.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="clients-empty"><p>No se encontraron clientes</p></td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = clients.map(client => {
+                // Plan badge
+                const planLabels = { basic: 'Basic', plus: 'Plus', premium: 'Premium' };
+                const planClass  = { basic: 'plan-basic', plus: 'plan-plus', premium: 'plan-premium' };
+                const plan = client.planId || 'basic';
+                const planBadge = `<span class="plan-badge ${planClass[plan] || 'plan-basic'}">${planLabels[plan] || plan}</span>`;
+
+                // Rating stars
+                const stars = client.averageRating > 0
+                    ? '&#9733;'.repeat(Math.round(client.averageRating)) + '&#9734;'.repeat(5 - Math.round(client.averageRating))
+                    : 'â';
+                const ratingDisplay = client.totalReviews > 0
+                    ? `<span class="rating-stars">${stars}</span><span class="rating-num">${client.averageRating}</span>`
+                    : '<span class="rating-num">Sin rese&#241;as</span>';
+
+                // Time subscribed
+                const months = client.monthsSince || 0;
+                const days   = client.daysSince   || 0;
+                const timeDisplay = months > 0
+                    ? `<div class="time-subscribed">${months} mes${months !== 1 ? 'es' : ''}</div><div class="time-days">${days} d&#237;as</div>`
+                    : `<div class="time-subscribed">${days} d&#237;a${days !== 1 ? 's' : ''}</div>`;
+
+                // Renewal date
+                const renewalDisplay = client.nextRenewalDate
+                    ? formatDate(client.nextRenewalDate)
+                    : 'â';
+
+                // Google badge
+                const googleBadge = client.googleLinked
+                    ? '<span class="google-badge-yes">&#10003; Vinculado</span>'
+                    : '<span class="google-badge-no">&#215; Sin vincular</span>';
+
+                return `
+                    <tr>
+                        <td>
+                            <div class="client-business">${escapeHtml(client.businessName || 'â')}</div>
+                            <div class="client-owner">${escapeHtml(client.ownerName || '')}</div>
+                        </td>
+                        <td class="client-email">${escapeHtml(client.email || 'â')}</td>
+                        <td class="center">${planBadge}</td>
+                        <td class="center"><span class="reviews-count">${client.totalReviews}</span></td>
+                        <td class="center">${ratingDisplay}</td>
+                        <td class="center">${timeDisplay}</td>
+                        <td class="center renewal-date">${renewalDisplay}</td>
+                        <td class="center">${googleBadge}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function updateClientStats(clients) {
+            // Totals from current page (approximate; totals from full query are in clientsTotal)
+            document.getElementById('statActive').textContent   = clientsTotal;
+
+            const totalReviews = clients.reduce((s, c) => s + (c.totalReviews || 0), 0);
+            document.getElementById('statReviews').textContent  = totalReviews;
+
+            const countBasic   = clients.filter(c => c.planId === 'basic').length;
+            const countPlus    = clients.filter(c => c.planId === 'plus').length;
+            const countPremium = clients.filter(c => c.planId === 'premium').length;
+            document.getElementById('statBasic').textContent   = countBasic;
+            document.getElementById('statPlus').textContent    = countPlus;
+            document.getElementById('statPremium').textContent = countPremium;
+        }
+
+        function updateClientsPagination() {
+            const pag = document.getElementById('clientsPagination');
+            if (clientsTotalPages <= 1) {
+                pag.style.display = 'none';
+                return;
+            }
+            pag.style.display = 'flex';
+            document.getElementById('paginationInfo').textContent =
+                `P&#225;gina ${clientsCurrentPage} de ${clientsTotalPages}`;
+            document.getElementById('btnPrevPage').disabled = clientsCurrentPage <= 1;
+            document.getElementById('btnNextPage').disabled = clientsCurrentPage >= clientsTotalPages;
+        }
+
+        function changePage(dir) {
+            clientsCurrentPage = Math.max(1, Math.min(clientsTotalPages, clientsCurrentPage + dir));
+            loadClients();
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'â';
+            return new Date(dateStr).toLocaleDateString('es-ES', {
+                year:  'numeric',
+                month: 'short',
+                day:   'numeric'
+            });
+        }
+
+        // switchTab unificado â maneja reviews, clients y qr
+        function switchTab(tabName) {
+            // Hide all tabs and deactivate buttons
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabName === 'clients' && clientsData.length === 0) {
+                loadClients();
+            }
         }
     </script>
 </body>
