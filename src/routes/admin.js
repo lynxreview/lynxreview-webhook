@@ -9,11 +9,16 @@ const router = express.Router();
 // All admin routes require admin authentication
 router.use(adminAuth);
 
-// GET /api/admin/clients - List all clients
+// GET /api/admin/clients - List all clients with full metrics
 router.get('/clients', async (req, res) => {
   try {
-    const { search, limit = 50, skip = 0 } = req.query;
+    const { search, limit = 50, skip = 0, sortBy = 'subscriptionStartDate', onlyActive } = req.query;
     const query = {};
+
+    // Filter only active subscriptions by default (or if explicitly requested)
+    if (onlyActive === 'true' || onlyActive === undefined) {
+      query.subscriptionStatus = 'active';
+    }
 
     if (search) {
       query.$or = [
@@ -23,25 +28,72 @@ router.get('/clients', async (req, res) => {
       ];
     }
 
+    // Valid sort fields
+    const validSortFields = ['subscriptionStartDate', 'businessName', 'createdAt', 'planId'];
+    const sortField = validSortFields.includes(sortBy) ? sortBy : 'subscriptionStartDate';
+
     const clients = await User.find(query)
       .select('-passwordHash -googleAccessToken -googleRefreshToken')
-      .sort({ createdAt: -1 })
+      .sort({ [sortField]: sortField === 'businessName' ? 1 : -1 })
       .limit(parseInt(limit))
       .skip(parseInt(skip));
 
     const total = await User.countDocuments(query);
 
-    // Add review count for each client
+    // Enrich each client with metrics
     const clientsWithMetrics = await Promise.all(
       clients.map(async (client) => {
-        const reviewCount = await Review.countDocuments({ userId: client._id });
         const obj = client.toObject();
-        obj.totalReviews = reviewCount;
+
+        // Total reviews
+        const reviews = await Review.find({ userId: client._id }).select('rating').lean();
+        obj.totalReviews = reviews.length;
+
+        // Average rating
+        obj.averageRating = reviews.length > 0
+          ? parseFloat((reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1))
+          : 0;
+
+        // Time subscribed
+        const now = new Date();
+        const startDate = client.subscriptionStartDate
+          ? new Date(client.subscriptionStartDate)
+          : new Date(client.createdAt);
+        const daysSince = Math.max(0, Math.floor((now - startDate) / (1000 * 60 * 60 * 24)));
+        obj.daysSince = daysSince;
+        obj.monthsSince = Math.floor(daysSince / 30);
+
+        // Next renewal date (30-day cycles from subscriptionStartDate)
+        let nextRenewal = new Date(startDate);
+        while (nextRenewal <= now) {
+          nextRenewal.setDate(nextRenewal.getDate() + 30);
+        }
+        obj.nextRenewalDate = nextRenewal;
+
+        // Google linked status
+        obj.googleLinked = !!client.googleLinkedAt;
+
         return obj;
       })
     );
 
-    res.json({ success: true, total, clients: clientsWithMetrics });
+    // If sortBy is totalReviews or averageRating, sort in memory after enrichment
+    if (sortBy === 'totalReviews') {
+      clientsWithMetrics.sort((a, b) => b.totalReviews - a.totalReviews);
+    } else if (sortBy === 'averageRating') {
+      clientsWithMetrics.sort((a, b) => b.averageRating - a.averageRating);
+    }
+
+    res.json({
+      success: true,
+      total,
+      clients: clientsWithMetrics,
+      pagination: {
+        limit: parseInt(limit),
+        skip: parseInt(skip),
+        pages: Math.ceil(total / parseInt(limit))
+      }
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
