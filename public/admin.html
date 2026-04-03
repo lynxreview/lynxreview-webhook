@@ -1380,7 +1380,7 @@ ${escapeHtml(review.proposedResponse)}</textarea>
                 const from = skip + 1;
                 const to   = Math.min(skip + clientsData.length, clientsTotal);
                 document.getElementById('clientsInfo').textContent =
-                    `Mostrando ${from}â${to} de ${clientsTotal} clientes activos`;
+                    `Mostrando ${from}-${to} de ${clientsTotal} clientes activos`;
 
             } catch (err) {
                 tbody.innerHTML = `<tr><td colspan="8" class="clients-empty"><p style="color:#dc3545;">&#9888; Error: ${escapeHtml(err.message)}</p></td></tr>`;
