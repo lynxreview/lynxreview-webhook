@@ -115,6 +115,29 @@
             font-weight: 600;
         }
 
+        .btn-approve-all {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: none;
+        }
+        .btn-approve-all:hover {
+            background: linear-gradient(135deg, #218838, #17a589);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(40,167,69,0.4);
+        }
+        .btn-approve-all:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .btn-refresh:hover {
             background: #5568d3;
         }
@@ -831,6 +854,7 @@
                 </select>
             </div>
             <button class="btn-refresh" onclick="loadReviews()"> Actualizar</button>
+            <button class="btn-approve-all" onclick="approveAllPending()" id="btnApproveAll"> Aprobar todas</button>
         </div>
 
         <div class="tabs">
@@ -1010,6 +1034,11 @@
         }
 
         function displayReviews() {
+            const approveAllBtn = document.getElementById('btnApproveAll');
+            const statusFilterEl = document.getElementById('statusFilter');
+            const isPending = !statusFilterEl || statusFilterEl.value === 'pending_response' || statusFilterEl.value === '';
+            if (approveAllBtn) approveAllBtn.style.display = (isPending && filteredReviews && filteredReviews.length > 0) ? 'inline-block' : 'none';
+
             const reviewsList = document.getElementById('reviewsList');
 
             if (!filteredReviews || filteredReviews.length === 0) {
@@ -1114,6 +1143,36 @@ ${escapeHtml(review.proposedResponse)}</textarea>
             } catch (error) {
                 showMessage('Error al aprobar: ' + error.message, 'error');
             }
+        }
+
+        async function approveAllPending() {
+            const pending = allReviews.filter(r => r.status === 'pending_response' || !r.status || r.status === 'pending');
+            if (pending.length === 0) {
+                showMessage('No hay resenas pendientes de aprobacion.', 'error');
+                return;
+            }
+            if (!confirm('Aprobar y publicar ' + pending.length + ' resena(s) pendiente(s)?')) return;
+            
+            const btn = document.getElementById('btnApproveAll');
+            if (btn) { btn.disabled = true; btn.textContent = ' Aprobando...'; }
+            
+            let ok = 0, fail = 0;
+            for (const review of pending) {
+                try {
+                    const token = localStorage.getItem('adminToken');
+                    const resp = await fetch('/api/reviews/' + review._id + '/approve', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                        body: JSON.stringify({ response: review.suggestedResponse || '' })
+                    });
+                    const data = await resp.json();
+                    if (data.success) ok++; else fail++;
+                } catch(e) { fail++; }
+            }
+            
+            if (btn) { btn.disabled = false; btn.textContent = ' Aprobar todas'; }
+            showMessage('Aprobadas: ' + ok + (fail > 0 ? ' | Fallidas: ' + fail : ''), ok > 0 ? 'success' : 'error');
+            await loadReviews();
         }
 
         async function denyReview(reviewId) {
