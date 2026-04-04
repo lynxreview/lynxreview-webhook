@@ -22,6 +22,21 @@ router.post('/register', async (req, res) => {
     if (existing) {
       return res.status(400).json({ success: false, error: 'Email already registered' });
     }
+    // Verificar pago completado en Stripe antes de crear la cuenta
+    if (!stripeSessionId) {
+      return res.status(400).json({ success: false, error: 'Se requiere sesion de pago valida' });
+    }
+
+    try {
+      const stripeClient = require('stripe')(process.env.STRIPE_SECRET_KEY);
+      const stripeSession = await stripeClient.checkout.sessions.retrieve(stripeSessionId);
+      if (stripeSession.payment_status !== 'paid') {
+        return res.status(402).json({ success: false, error: 'Pago no completado. Completa el pago antes de registrarte.' });
+      }
+    } catch (stripeErr) {
+      console.error('Stripe verify error:', stripeErr.message);
+      return res.status(400).json({ success: false, error: 'No se pudo verificar el pago de Stripe.' });
+    }
     const user = new User({
       email: email.toLowerCase(),
       passwordHash: password,
