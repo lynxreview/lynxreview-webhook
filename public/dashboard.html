@@ -328,6 +328,7 @@
     try {
       const res  = await fetch(API + '/api/auth/google/status', { headers: { Authorization: 'Bearer ' + _token } });
       const data = await res.json();
+    if (!data.success) { const card = document.getElementById('googleCard'); if (card) card.style.display = 'none'; return; }
       const statusEl = document.getElementById('googleStatus');
       const btnEl    = document.getElementById('connectBtn');
       const profEl   = document.getElementById('profGoogle');
@@ -595,6 +596,7 @@
   window.onload = function() {
     _token = localStorage.getItem('token');
     if (!_token) { window.location.href = '/login.html'; return; }
+  try { const p = JSON.parse(atob(_token.split('.')[1])); if (p.role === 'admin') { window.location.href = '/admin.html'; return; } } catch(e) {}
     loadProfile();
     loadQR();
     checkGoogleConnection();
