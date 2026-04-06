@@ -589,13 +589,13 @@
 
   function doLogout() {
     localStorage.removeItem('token');
-    window.location.href = '/login.html';
+    window.location.href = '/index.html';
   }
 
   // ── INIT ──────────────────────────────────────────────────────────────
   window.onload = function() {
     _token = localStorage.getItem('token');
-    if (!_token) { window.location.href = '/login.html'; return; }
+    if (!_token) { window.location.href = '/index.html'; return; }
   try { const p = JSON.parse(atob(_token.split('.')[1])); if (p.role === 'admin') { window.location.href = '/admin.html'; return; } } catch(e) {}
     loadProfile();
     loadQR();
