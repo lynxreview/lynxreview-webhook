@@ -344,10 +344,21 @@
     } catch(e) { /* silent */ }
   }
 
-  function doConnectGoogle() {
-    window.location.href = API + '/api/auth/google?token=' + encodeURIComponent(_token);
-  }
-
+    async function doConnectGoogle() {
+            try {
+                    const res = await fetch(API + '/api/auth/google/start', { headers: { Authorization: 'Bearer ' + _token } });
+                            const data = await res.json();
+                                    if (data.success && data.authUrl) {
+                                              window.location.href = data.authUrl;
+                                                      } else {
+                                                                showMsg('Error al conectar con Google: ' + (data.error || 'Error desconocido'), 'error');
+                                                                        }
+                                                                              } catch(e) {
+                                                                                      showMsg('Error al conectar con Google', 'error');
+                                                                                            }
+                                                                                                }
+                                                                                                
+    }
   // ── LOAD REVIEWS ─────────────────────────────────────────────────────
   async function refreshReviews() {
     try {
