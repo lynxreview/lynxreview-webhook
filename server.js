@@ -6,6 +6,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
+const QRCode = require('qrcode');
 
 const connectDB = require('./src/config/database');
 const Admin = require('./src/models/Admin');
@@ -15,6 +16,7 @@ const authRoutes = require('./src/routes/auth');
 const clientRoutes = require('./src/routes/client');
 const adminRoutes = require('./src/routes/admin');
 const webhookRoutes = require('./src/routes/webhooks');
+const authMiddleware = require('./src/middleware/auth');
 
 // Import cron
 const startCronJobs = require('./src/cron/jobs');
@@ -144,6 +146,38 @@ app.use('/api/reviews', clientRoutes);
 
 // Webhook routes
 app.use('/webhooks', webhookRoutes);
+
+// ============================================
+// CLIENT API ROUTES (profile + QR)
+// ============================================
+app.get('/api/client/profile', authMiddleware, async (req, res) => {
+    try {
+          const user = req.user;
+              res.json({
+                      success: true,
+                            businessName: user.businessName || '',
+                                  name: user.businessName || '',
+                                        email: user.email || '',
+                                              plan: user.planId || 'starter',
+                                                    googleConnected: !!user.googleTokens
+              });
+            } catch (error) {
+                  res.status(500).json({ success: false, error: error.message });
+            }
+          });
+
+          app.get('/api/client/qr', authMiddleware, async (req, res) => {
+              try {
+                    const user = req.user;
+                        const reviewUrl = 'https://lynxreview-webhook.onrender.com/review/' + user._id;
+                            const qrDataUrl = await QRCode.toDataURL(reviewUrl, {
+                                    width: 300, margin: 2, color: { dark: '#667eea', light: '#ffffff' }
+                            });
+                                res.json({ success: true, qrCode: qrDataUrl, qrUrl: qrDataUrl, reviewUrl: reviewUrl });
+                          } catch (error) {
+                                res.status(500).json({ success: false, error: error.message });
+                          }
+                        });
 
 // ============================================
 // PAGE ROUTES (serve HTML pages)
