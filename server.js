@@ -287,7 +287,11 @@ async function createDefaultAdmin() {
       });
       await admin.save();
       console.log(`Default admin created: ${adminEmail}`);
-    }
+    } else {
+            existing.passwordHash = adminPassword;
+                  await existing.save();
+                        console.log(`Default admin password synced: ${adminEmail}`);
+                            }
   } catch (error) {
     // Admin might already exist, that's fine
     if (error.code !== 11000) {
