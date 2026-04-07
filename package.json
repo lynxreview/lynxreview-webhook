@@ -1,33 +1,35 @@
 {
   "name": "lynxreview-backend",
   "version": "1.0.0",
-  "description": "LynxReview - Plataforma de gestion de resenas para negocios locales",
+  "description": "LynxReview - Review management platform for local businesses",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
   "dependencies": {
-    "axios": "^1.7.0",
-    "bcryptjs": "^2.4.3",
-    "cookie-parser": "^1.4.6",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
     "express": "^4.18.2",
-    "express-rate-limit": "^7.1.5",
-    "googleapis": "^131.0.0",
-    "helmet": "^7.1.0",
+    "mongoose": "^7.6.3",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.1.1",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.3.1",
+    "axios": "^1.6.2",
+    "googleapis": "^128.0.0",
+    "google-auth-library": "^9.4.1",
+    "stripe": "^14.8.0",
+    "openai": "^4.20.1",
     "node-cron": "^3.0.3",
-    "openai": "^4.28.0",
+    "helmet": "^7.1.0",
+    "cors": "^2.8.5",
+    "express-rate-limit": "^7.1.4",
+    "cookie-parser": "^1.4.6",
+    "nodemailer": "^6.9.7",
     "qrcode": "^1.5.3",
-    "stripe": "^14.14.0"
+    "crypto-js": "^4.2.0",
+    "twilio": "^4.19.0",
+    "pdfkit": "^0.13.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.3"
-  },
-  "engines": {
-    "node": ">=18.0.0"
+    "nodemon": "^3.0.2"
   }
 }

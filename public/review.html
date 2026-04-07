@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Déjanos tu reseña</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+      width: 100%;
+      padding: 40px 30px;
+      animation: slideUp 0.5s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .business-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .logo-placeholder {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      color: white;
+      font-weight: bold;
+    }
+
+    .business-name {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1a202c;
+      margin-bottom: 8px;
+      word-break: break-word;
+    }
+
+    .heading {
+      font-size: 22px;
+      font-weight: 600;
+      color: #2d3748;
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .stars-container {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+
+    .star {
+      width: 50px;
+      height: 50px;
+      font-size: 40px;
+      cursor: pointer;
+      transition: transform 0.2s, filter 0.2s;
+      user-select: none;
+      opacity: 0.4;
+    }
+
+    .star:hover {
+      transform: scale(1.15);
+      opacity: 0.7;
+    }
+
+    .star.active {
+      opacity: 1;
+    }
+
+    .feedback-form {
+      display: none;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .feedback-form.visible {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #2d3748;
+      margin-bottom: 8px;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 16px;
+      font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .optional-text {
+      font-size: 12px;
+      color: #718096;
+      font-style: italic;
+      margin-top: 4px;
+    }
+
+    .button-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 14px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: #f7fafc;
+      color: #2d3748;
+      border: 1px solid #e2e8f0;
+    }
+
+    .btn-secondary:hover {
+      background: #edf2f7;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .success-message {
+      display: none;
+      text-align: center;
+      padding: 32px 20px;
+    }
+
+    .success-message.visible {
+      display: block;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .success-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .success-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #22863a;
+      margin-bottom: 8px;
+    }
+
+    .success-text {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 24px;
+    }
+
+    .footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #e2e8f0;
+      text-align: center;
+      font-size: 12px;
+      color: #718096;
+    }
+
+    .footer-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .lynx-brand {
+      font-weight: 700;
+      color: #667eea;
+    }
+
+    .error-message {
+      background: #fed7d7;
+      color: #c53030;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .error-message.visible {
+      display: block;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .no-rating {
+      text-align: center;
+      color: #a0aec0;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 30px 20px;
+      }
+
+      .heading {
+        font-size: 20px;
+      }
+
+      .stars-container {
+        gap: 12px;
+      }
+
+      .star {
+        width: 44px;
+        height: 44px;
+        font-size: 36px;
+      }
+
+      .business-name {
+        font-size: 20px;
+      }
+
+      .logo-placeholder {
+        width: 70px;
+        height: 70px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Business Header -->
+    <div class="business-header">
+      <div class="logo-placeholder">🏢</div>
+      <div class="business-name" id="businessName">Cargando...</div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent">
+      <h1 class="heading">¿Cómo fue tu experiencia?</h1>
+
+      <!-- Star Rating -->
+      <div class="stars-container">
+        <span class="star" data-rating="1">⭐</span>
+        <span class="star" data-rating="2">⭐</span>
+        <span class="star" data-rating="3">⭐</span>
+        <span class="star" data-rating="4">⭐</span>
+        <span class="star" data-rating="5">⭐</span>
+      </div>
+
+      <div class="no-rating" id="noRatingText">Selecciona una calificación para continuar</div>
+
+      <!-- Low Rating Feedback Form (hidden by default) -->
+      <div class="feedback-form" id="feedbackForm">
+        <div class="error-message" id="errorMessage"></div>
+
+        <div class="form-group">
+          <label for="customerName">Tu nombre</label>
+          <input type="text" id="customerName" placeholder="(Opcional)" maxlength="100">
+          <div class="optional-text">Opcional</div>
+        </div>
+
+        <div class="form-group">
+          <label for="feedbackText">Cuéntanos qué pasó</label>
+          <textarea id="feedbackText" placeholder="Tu comentario nos ayudará a mejorar..." maxlength="1000" required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="customerEmail">Tu email</label>
+          <input type="email" id="customerEmail" placeholder="ejemplo@correo.com" maxlength="100">
+          <div class="optional-text">Para que nos comuniquemos contigo si es necesario</div>
+        </div>
+
+        <div class="button-group">
+          <button class="btn btn-primary" id="submitBtn" onclick="submitFeedback()">
+            Enviar comentario
+          </button>
+          <button class="btn btn-secondary" onclick="resetRating()">
+            Cambiar calificación
+          </button>
+        </div>
+      </div>
+
+      <!-- High Rating Button (hidden by default) -->
+      <div id="highRatingContent" style="display: none;">
+        <div class="button-group">
+          <button class="btn btn-primary" id="googleBtn" onclick="redirectToGoogle()">
+            Dejar reseña en Google
+          </button>
+          <button class="btn btn-secondary" onclick="resetRating()">
+            Cambiar calificación
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Success Message -->
+    <div class="success-message" id="successMessage">
+      <div class="success-icon">✓</div>
+      <div class="success-title">¡Gracias por tu comentario!</div>
+      <div class="success-text">Tu retroalimentación nos ayudará a mejorar nuestro servicio.</div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      Powered by <span class="footer-logo"><span class="lynx-brand">LynxReview</span></span>
+    </div>
+  </div>
+
+  <script>
+    let currentRating = 0;
+    let businessData = null;
+    let userId = null;
+
+    // Extract user ID from URL
+    const pathSegments = window.location.pathname.split('/');
+    userId = pathSegments[pathSegments.length - 1];
+
+    // Load business info
+    async function loadBusinessInfo() {
+      try {
+        const response = await fetch(`/api/review/${userId}/info`);
+        const data = await response.json();
+
+        if (data.success) {
+          businessData = data;
+          document.getElementById('businessName').textContent = data.businessName || 'Nuestro negocio';
+        } else {
+          console.error('Failed to load business info:', data.error);
+          document.getElementById('businessName').textContent = 'Nuestro negocio';
+        }
+      } catch (error) {
+        console.error('Error loading business info:', error);
+        document.getElementById('businessName').textContent = 'Nuestro negocio';
+      }
+    }
+
+    // Initialize stars
+    function initStars() {
+      const stars = document.querySelectorAll('.star');
+      stars.forEach(star => {
+        star.addEventListener('click', () => {
+          selectRating(parseInt(star.dataset.rating));
+        });
+        star.addEventListener('mouseover', () => {
+          const rating = parseInt(star.dataset.rating);
+          updateStarVisuals(rating, true);
+        });
+      });
+
+      document.querySelector('.stars-container').addEventListener('mouseleave', () => {
+        updateStarVisuals(currentRating, false);
+      });
+    }
+
+    // Select rating
+    function selectRating(rating) {
+      currentRating = rating;
+      updateStarVisuals(rating, false);
+      showRatingContent(rating);
+    }
+
+    // Update star visuals
+    function updateStarVisuals(rating, isHover) {
+      const stars = document.querySelectorAll('.star');
+      stars.forEach((star, idx) => {
+        if (idx < rating) {
+          star.style.opacity = '1';
+          star.style.transform = 'scale(1)';
+        } else {
+          star.style.opacity = isHover ? '0.4' : (currentRating > 0 ? '0.4' : '0.4');
+          star.style.transform = 'scale(1)';
+        }
+        if (idx < rating) {
+          star.classList.add('active');
+        } else {
+          star.classList.remove('active');
+        }
+      });
+    }
+
+    // Show appropriate content based on rating
+    function showRatingContent(rating) {
+      const feedbackForm = document.getElementById('feedbackForm');
+      const highRatingContent = document.getElementById('highRatingContent');
+      const noRatingText = document.getElementById('noRatingText');
+
+      noRatingText.style.display = 'none';
+
+      if (rating >= 4) {
+        // High rating - show Google review button
+        feedbackForm.classList.remove('visible');
+        highRatingContent.style.display = 'block';
+      } else {
+        // Low rating - show feedback form
+        feedbackForm.classList.add('visible');
+        highRatingContent.style.display = 'none';
+        document.getElementById('feedbackText').focus();
+      }
+    }
+
+    // Reset rating
+    function resetRating() {
+      currentRating = 0;
+      updateStarVisuals(0, false);
+
+      const feedbackForm = document.getElementById('feedbackForm');
+      const highRatingContent = document.getElementById('highRatingContent');
+      const noRatingText = document.getElementById('noRatingText');
+      const successMessage = document.getElementById('successMessage');
+
+      feedbackForm.classList.remove('visible');
+      highRatingContent.style.display = 'none';
+      successMessage.classList.remove('visible');
+      noRatingText.style.display = 'block';
+
+      // Clear form
+      document.getElementById('customerName').value = '';
+      document.getElementById('feedbackText').value = '';
+      document.getElementById('customerEmail').value = '';
+      document.getElementById('errorMessage').classList.remove('visible');
+    }
+
+    // Submit feedback
+    async function submitFeedback() {
+      const customerName = document.getElementById('customerName').value.trim();
+      const feedbackText = document.getElementById('feedbackText').value.trim();
+      const customerEmail = document.getElementById('customerEmail').value.trim();
+      const errorMessage = document.getElementById('errorMessage');
+
+      // Validation
+      if (!feedbackText) {
+        errorMessage.textContent = 'Por favor, cuéntanos qué pasó';
+        errorMessage.classList.add('visible');
+        return;
+      }
+
+      if (customerEmail && !isValidEmail(customerEmail)) {
+        errorMessage.textContent = 'Por favor, ingresa un email válido';
+        errorMessage.classList.add('visible');
+        return;
+      }
+
+      // Submit
+      const submitBtn = document.getElementById('submitBtn');
+      const originalText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="loading"></span>';
+
+      try {
+        const response = await fetch(`/api/review/${userId}/feedback`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            rating: currentRating,
+            feedbackText,
+            customerName: customerName || undefined,
+            customerEmail: customerEmail || undefined
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Show success message
+          document.getElementById('mainContent').style.display = 'none';
+          document.getElementById('successMessage').classList.add('visible');
+        } else {
+          errorMessage.textContent = data.error || 'Ocurrió un error. Por favor, intenta de nuevo.';
+          errorMessage.classList.add('visible');
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
+      } catch (error) {
+        console.error('Error submitting feedback:', error);
+        errorMessage.textContent = 'Error de conexión. Por favor, intenta de nuevo.';
+        errorMessage.classList.add('visible');
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
+    }
+
+    // Redirect to Google review
+    function redirectToGoogle() {
+      if (businessData && businessData.googleReviewUrl) {
+        window.location.href = businessData.googleReviewUrl;
+      } else {
+        // Fallback: show feedback form instead if no Google URL
+        const errorMessage = document.getElementById('errorMessage');
+        errorMessage.textContent = 'El enlace de Google no está disponible en este momento. Por favor, deja tu comentario aquí.';
+        errorMessage.classList.add('visible');
+        document.getElementById('highRatingContent').style.display = 'none';
+        document.getElementById('feedbackForm').classList.add('visible');
+      }
+    }
+
+    // Email validation
+    function isValidEmail(email) {
+      const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return re.test(email);
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      loadBusinessInfo();
+      initStars();
+    });
+  </script>
+</body>
+</html>
