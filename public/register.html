@@ -16,170 +16,465 @@
             padding: 20px;
         }
         .auth-container {
-            background: white; border-radius: 15px; padding: 40px;
-            width: 100%; max-width: 480px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
-        .logo { text-align: center; margin-bottom: 25px; }
+        .logo {
+            text-align: center;
+            margin-bottom: 25px;
+        }
         .logo h1 { color: #667eea; font-size: 28px; margin-bottom: 5px; }
         .logo p { color: #999; font-size: 14px; }
         .form-group { margin-bottom: 16px; }
-        .form-group label { display: block; font-weight: 600; color: #333; margin-bottom: 6px; font-size: 13px; }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
         .form-group input, .form-group select {
-            width: 100%; padding: 11px 14px; border: 2px solid #e0e0e0; border-radius: 8px;
-            font-size: 14px; transition: border-color 0.3s; font-family: inherit;
+            width: 100%;
+            padding: 11px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            font-family: inherit;
         }
-        .form-group input:focus, .form-group select:focus { outline: none; border-color: #667eea; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .plan-info {
-            background: #f0f4ff; padding: 12px; border-radius: 8px; margin-bottom: 20px;
-            font-size: 13px; color: #4a5568; border-left: 4px solid #667eea;
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
         }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        /* Plan Cards */
+        .plan-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .plan-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 14px 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            position: relative;
+        }
+        .plan-card:hover { border-color: #667eea; transform: translateY(-1px); }
+        .plan-card.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        .plan-card .plan-name { font-weight: 700; color: #333; font-size: 14px; }
+        .plan-card .plan-price { color: #667eea; font-size: 18px; font-weight: 800; margin: 4px 0; }
+        .plan-card .plan-period { color: #999; font-size: 11px; }
+        .plan-card .plan-badge {
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #667eea;
+            color: white;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            white-space: nowrap;
+        }
+        /* Trial Card Special Styling */
+        .plan-card.trial-card {
+            border-color: #1eaa9b;
+            background: linear-gradient(135deg, #1eaa9b08 0%, #20c99e08 100%);
+        }
+        .plan-card.trial-card:hover {
+            border-color: #20c99e;
+            background: linear-gradient(135deg, #1eaa9b12 0%, #20c99e12 100%);
+        }
+        .plan-card.trial-card.selected {
+            border-color: #20c99e;
+            background: linear-gradient(135deg, #1eaa9b20 0%, #20c99e20 100%);
+        }
+        .plan-card.trial-card .plan-badge {
+            background: linear-gradient(135deg, #1eaa9b 0%, #20c99e 100%);
+            font-weight: 700;
+            padding: 3px 10px;
+            font-size: 11px;
+        }
+        .plan-card.trial-card .plan-name {
+            color: #1eaa9b;
+            font-weight: 700;
+        }
+        .plan-card.trial-card .plan-price {
+            color: #20c99e;
+            font-size: 20px;
+        }
+        .plan-card.trial-card .plan-period {
+            font-size: 12px;
+            color: #1eaa9b;
+            font-weight: 500;
+        }
+        /* Alerts */
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            display: none;
+        }
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+        /* Buttons */
         .btn-primary {
-            width: 100%; padding: 14px;
+            width: 100%;
+            padding: 14px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600;
-            cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 5px;
         }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4); }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
         .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-        .switch-auth { text-align: center; margin-top: 20px; font-size: 14px; color: #666; }
-        .switch-auth a { color: #667eea; text-decoration: none; font-weight: 600; }
-        .error-msg {
-            background: #f8d7da; color: #721c24; padding: 12px; border-radius: 8px;
-            margin-bottom: 15px; font-size: 14px; display: none;
+        .btn-secondary {
+            width: 100%;
+            padding: 11px;
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
         }
-        @media (max-width: 500px) { .form-row { grid-template-columns: 1fr; } }
+        /* Divider */
+        .divider {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 20px 0;
+        }
+        .step-label {
+            font-size: 12px;
+            color: #999;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+        .switch-auth {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        .switch-auth a { color: #667eea; text-decoration: none; font-weight: 600; }
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 900px) {
+            .plan-cards { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 500px) {
+            .form-row { grid-template-columns: 1fr; }
+            .plan-cards { grid-template-columns: 1fr; }
+        }
+        /* Step visibility */
+        #stepPayment { display: block; }
+        #stepRegister { display: none; }
     </style>
 </head>
 <body>
     <div class="auth-container">
         <div class="logo">
             <h1>LynxReview</h1>
-            <p>Crea tu cuenta para acceder al Panel de Cliente</p>
+            <p id="logoSubtitle">Elige tu plan para empezar</p>
         </div>
 
-        <div class="plan-info" id="planInfo" style="display:none;"></div>
-        <div id="errorMsg" class="error-msg"></div>
+        <div id="alertSuccess" class="alert alert-success"></div>
+        <div id="alertError" class="alert alert-error"></div>
+        <div id="alertInfo" class="alert alert-info"></div>
 
-        <form id="registerForm" onsubmit="handleRegister(event)">
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Nombre del propietario</label>
-                    <input type="text" id="ownerName" required placeholder="Tu nombre completo">
-                </div>
-                <div class="form-group">
-                    <label>Nombre del negocio</label>
-                    <input type="text" id="businessName" required placeholder="Nombre de tu local">
-                </div>
-            </div>
+        <!-- PASO 1: Selección de plan y datos básicos para Stripe -->
+        <div id="stepPayment">
+            <p class="step-label">Paso 1 de 2 — Selecciona tu plan</p>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Correo electronico</label>
-                    <input type="email" id="email" required placeholder="tu@email.com">
+            <div class="plan-cards">
+                <div class="plan-card" onclick="selectPlan('basic')">
+                    <div class="plan-name">Básico</div>
+                    <div class="plan-price">19€</div>
+                    <div class="plan-period">/mes</div>
                 </div>
-                <div class="form-group">
-                    <label>Telefono</label>
-                    <input type="tel" id="phone" required placeholder="+34 612 345 678">
+                <div class="plan-card selected" id="card-plus" onclick="selectPlan('plus')">
+                    <div class="plan-badge">Recomendado</div>
+                    <div class="plan-name">Plus</div>
+                    <div class="plan-price">39€</div>
+                    <div class="plan-period">/mes</div>
                 </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Contrasena</label>
-                    <input type="password" id="password" required minlength="6" placeholder="Minimo 6 caracteres">
-                </div>
-                <div class="form-group">
-                    <label>Confirmar contrasena</label>
-                    <input type="password" id="confirmPassword" required placeholder="Repite la contrasena">
+                <div class="plan-card" onclick="selectPlan('premium')">
+                    <div class="plan-name">Premium</div>
+                    <div class="plan-price">59€</div>
+                    <div class="plan-period">/mes</div>
                 </div>
             </div>
 
             <div class="form-group">
-                <label>Plan contratado</label>
-                <select id="planId">
-                    <option value="basic">Basico - 19 EUR/mes</option>
-                    <option value="plus" selected>Plus - 39 EUR/mes (Recomendado)</option>
-                    <option value="premium">Premium - 59 EUR/mes</option>
-                </select>
+                <label>Tu correo electronico</label>
+                <input type="email" id="preEmail" placeholder="tu@email.com">
             </div>
 
-            <button type="submit" class="btn-primary" id="submitBtn">Crear Cuenta</button>
-        </form>
+            <button class="btn-primary" onclick="goToCheckout()" id="btnCheckout">
+                Continuar al pago →
+            </button>
+            <p style="text-align:center; font-size:12px; color:#999; margin-top:10px;">
+                Pago seguro con Stripe · Cancela cuando quieras
+            </p>
+        </div>
+
+        <!-- PASO 2: Registro post-pago -->
+        <div id="stepRegister">
+            <p class="step-label">Paso 2 de 2 — Completa tu registro</p>
+
+            <form id="registerForm" onsubmit="handleRegister(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombre del propietario</label>
+                        <input type="text" id="ownerName" required placeholder="Tu nombre completo">
+                    </div>
+                    <div class="form-group">
+                        <label>Nombre del negocio</label>
+                        <input type="text" id="businessName" required placeholder="Nombre de tu local">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Correo electronico</label>
+                        <input type="email" id="email" required placeholder="tu@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Telefono</label>
+                        <input type="tel" id="phone" required placeholder="+34 612 345 678">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Contrasena</label>
+                        <input type="password" id="password" required minlength="6" placeholder="Min 6 caracteres">
+                    </div>
+                    <div class="form-group">
+                        <label>Confirmar contrasena</label>
+                        <input type="password" id="confirmPassword" required placeholder="Repite la contrasena">
+                    </div>
+                </div>
+
+                <input type="hidden" id="planId" value="plus">
+                <input type="hidden" id="stripeSessionId" value="">
+
+                <button type="submit" class="btn-primary" id="submitBtn">Activar mi cuenta</button>
+                <button type="button" class="btn-secondary" onclick="backToPlans()">← Volver a planes</button>
+            </form>
+        </div>
 
         <div class="switch-auth">
-            <p>Ya tienes cuenta? <a href="/">Iniciar sesion</a></p>
+            <p>Ya tienes cuenta? <a href="/login">Iniciar sesion</a></p>
         </div>
     </div>
 
     <script>
-        // Pre-fill plan from URL params (from Stripe redirect)
+    // ============================================
+    // STATE
+    // ============================================
+    let selectedPlan = 'plus';
+
+    // ============================================
+    // ON PAGE LOAD
+    // ============================================
+    (function init() {
         const params = new URLSearchParams(window.location.search);
-        const planFromUrl = params.get('plan');
         const sessionId = params.get('session_id');
+        const plan = params.get('plan');
+        const cancelled = params.get('cancelled');
 
-        if (planFromUrl) {
-            document.getElementById('planId').value = planFromUrl;
-            const planNames = { basic: 'Basico (19 EUR/mes)', plus: 'Plus (39 EUR/mes)', premium: 'Premium (59 EUR/mes)' };
-            const planInfo = document.getElementById('planInfo');
-            planInfo.innerHTML = `Pago completado. Plan seleccionado: <strong>${planNames[planFromUrl] || planFromUrl}</strong>`;
-            planInfo.style.display = 'block';
+        if (sessionId) {
+            // User returned from Stripe with successful payment
+            selectedPlan = plan || 'plus';
+            showStep2(sessionId, selectedPlan);
+        } else if (cancelled) {
+            // User cancelled Stripe checkout
+            selectedPlan = plan || 'plus';
+            selectPlan(selectedPlan);
+            showAlert('info', 'Pago cancelado. Puedes intentarlo de nuevo cuando quieras.');
+        } else {
+            // Fresh page load - pre-select plan from URL if provided (e.g. from Store redirect)
+            selectPlan(plan || 'plus');
         }
+    })();
 
-        async function handleRegister(e) {
-            e.preventDefault();
-            const btn = document.getElementById('submitBtn');
-            btn.disabled = true;
-            btn.textContent = 'Creando cuenta...';
-
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-
-            if (password !== confirmPassword) {
-                showError('Las contrasenas no coinciden');
-                btn.disabled = false;
-                btn.textContent = 'Crear Cuenta';
-                return;
+    // ============================================
+    // PLAN SELECTION
+    // ============================================
+    function selectPlan(plan) {
+        selectedPlan = plan;
+        document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+        document.querySelectorAll('.plan-card').forEach(c => {
+            if (c.getAttribute('onclick') === `selectPlan('${plan}')`) {
+                c.classList.add('selected');
             }
+        });
+    }
 
-            try {
-                const response = await fetch('/api/auth/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: document.getElementById('email').value,
-                        password: password,
-                        businessName: document.getElementById('businessName').value,
-                        ownerName: document.getElementById('ownerName').value,
-                        phone: document.getElementById('phone').value,
-                        planId: document.getElementById('planId').value,
-                        stripeSessionId: sessionId || null,
-                    })
-                });
+    // ============================================
+    // STEP 1 → STRIPE CHECKOUT
+    // ============================================
+    function goToCheckout() {
+        // Direct Stripe Payment Links — no backend needed for checkout
+        const STRIPE_LINKS = {
+            basic:   'https://buy.stripe.com/00w00c94s2OD0dweR8aR200',
+            plus:    'https://buy.stripe.com/cNi7sEa8wgFt8K27oGaR201',
+            premium: 'https://buy.stripe.com/8x200cgwU74T1hAdN4aR202',
+        };
 
-                const data = await response.json();
+        const btn = document.getElementById('btnCheckout');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading-spinner"></span>Redirigiendo a pago seguro...';
 
-                if (data.success) {
-                    // Auto-login and redirect to dashboard
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    window.location.href = '/dashboard.html';
-                } else {
-                    showError(data.error || 'Error al crear cuenta');
-                }
-            } catch (error) {
-                showError('Error de conexion. Intenta de nuevo.');
-            }
+        const url = STRIPE_LINKS[selectedPlan] || STRIPE_LINKS.plus;
+        window.location.href = url;
+    }
 
+    // ============================================
+    // STEP 2 — REGISTRATION FORM (post-payment)
+    // ============================================
+    function showStep2(sessionId, plan) {
+        document.getElementById('stepPayment').style.display = 'none';
+        document.getElementById('stepRegister').style.display = 'block';
+        document.getElementById('logoSubtitle').textContent = 'Pago confirmado — Activa tu cuenta';
+        document.getElementById('planId').value = plan;
+        document.getElementById('stripeSessionId').value = sessionId;
+
+        const planNames = { basic: 'Básico (19€/mes)', plus: 'Plus (39€/mes)', premium: 'Premium (59€/mes)' };
+        showAlert('success', `✓ Pago completado. Plan: <strong>${planNames[plan] || plan}</strong>. Completa tu registro para acceder.`);
+    }
+
+    function backToPlans() {
+        document.getElementById('stepPayment').style.display = 'block';
+        document.getElementById('stepRegister').style.display = 'none';
+        document.getElementById('logoSubtitle').textContent = 'Elige tu plan para empezar';
+        selectPlan('plus');
+        hideAlerts();
+        window.history.replaceState({}, '', '/register.html');
+    }
+
+    // ============================================
+    // REGISTER FORM SUBMIT
+    // ============================================
+    async function handleRegister(e) {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading-spinner"></span>Creando tu cuenta...';
+        hideAlerts();
+
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        if (password !== confirmPassword) {
+            showAlert('error', 'Las contrasenas no coinciden');
             btn.disabled = false;
-            btn.textContent = 'Crear Cuenta';
+            btn.textContent = 'Activar mi cuenta';
+            return;
         }
 
-        function showError(msg) {
-            const el = document.getElementById('errorMsg');
-            el.textContent = msg;
+        try {
+            const response = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: document.getElementById('email').value.trim(),
+                    password,
+                    businessName: document.getElementById('businessName').value.trim(),
+                    ownerName: document.getElementById('ownerName').value.trim(),
+                    phone: document.getElementById('phone').value.trim(),
+                    planId: document.getElementById('planId').value,
+                    stripeSessionId: document.getElementById('stripeSessionId').value || null,
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                showAlert('success', '¡Cuenta creada! Redirigiendo al panel...');
+                setTimeout(() => { window.location.href = '/dashboard.html'; }, 1200);
+            } else {
+                showAlert('error', data.error || 'Error al crear cuenta');
+                btn.disabled = false;
+                btn.textContent = 'Activar mi cuenta';
+            }
+        } catch (error) {
+            showAlert('error', 'Error de conexion. Intenta de nuevo.');
+            btn.disabled = false;
+            btn.textContent = 'Activar mi cuenta';
+        }
+    }
+
+    // ============================================
+    // HELPERS
+    // ============================================
+    function showAlert(type, msg) {
+        hideAlerts();
+        const el = document.getElementById('alert' + type.charAt(0).toUpperCase() + type.slice(1));
+        if (el) {
+            el.innerHTML = msg;
             el.style.display = 'block';
         }
+    }
+
+    function hideAlerts() {
+        ['alertSuccess', 'alertError', 'alertInfo'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+    }
     </script>
 </body>
 </html>
