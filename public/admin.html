@@ -381,12 +381,12 @@
             </div>
           </div>
           <p class="review-text">${escapeHtml(r.reviewText || '')}</p>
-          ${r.suggestedResponse ? `
+          ${r.proposedResponse ? `
           <div class="response-preview">
             <div class="response-label">💡 Respuesta sugerida por IA:</div>
-            ${escapeHtml(r.suggestedResponse)}
+            ${escapeHtml(r.proposedResponse)}
           </div>` : ''}
-          <textarea class="response-input" id="resp-${r._id}" placeholder="Escribe o edita la respuesta antes de aprobar...">${escapeHtml(r.suggestedResponse || '')}</textarea>
+          <textarea class="response-input" id="resp-${r._id}" placeholder="Escribe o edita la respuesta antes de aprobar...">${escapeHtml(r.proposedResponse || '')}</textarea>
           <div class="review-actions">
             <button class="btn btn-success btn-sm" onclick="approveReview('${r._id}')">✅ Aprobar</button>
             <button class="btn btn-danger btn-sm"  onclick="rejectReview('${r._id}')">❌ Rechazar</button>
@@ -416,9 +416,8 @@
   }
 
   async function rejectReview(id) {
-    if (!confirm('¿Rechazar esta reseña?')) return;
     try {
-      const res = await fetch(API + '/api/reviews/' + id + '/reject', {
+      const res = await fetch(API + '/api/reviews/' + id + '/deny', {
         method: 'POST',
         headers: { Authorization: 'Bearer ' + token }
       });
@@ -437,7 +436,7 @@
     if (!confirm('¿Aprobar todas las reseñas pendientes (' + allPending.length + ')?')) return;
     let ok = 0, fail = 0;
     for (const r of allPending) {
-      const respText = document.getElementById('resp-' + r._id)?.value || r.suggestedResponse || '';
+      const respText = document.getElementById('resp-' + r._id)?.value || r.proposedResponse || '';
       try {
         const res = await fetch(API + '/api/reviews/' + r._id + '/approve', {
           method: 'POST',
@@ -517,8 +516,8 @@
       const planCls = plan === 'pro' ? 'badge-green' : plan === 'business' ? 'badge-yellow' : 'badge-gray';
       const isConn  = c.googleConnected || c.googleAccessToken;
       const connBadge = isConn ? '<span class="badge badge-green">✅ Sí</span>' : '<span class="badge badge-red">❌ No</span>';
-      const reviews = c.reviewCount !== undefined ? c.reviewCount : '—';
-      const avg     = c.avgRating ? parseFloat(c.avgRating).toFixed(1) : '—';
+      const reviews = c.totalReviews !== undefined ? c.totalReviews : '—';
+      const avg     = c.averageRating ? parseFloat(c.averageRating).toFixed(1) : '—';
       const since   = c.createdAt ? new Date(c.createdAt).toLocaleDateString('es-ES', { day:'2-digit', month:'short', year:'numeric' }) : '—';
       return `<tr onclick="openClientModal('${c._id}')">
         <td>${name}</td>
@@ -542,8 +541,8 @@
     document.getElementById('modalTitle').textContent = client.businessName || client.name || 'Cliente';
 
     document.getElementById('modalStats').innerHTML = `
-      <div class="modal-stat"><div class="v">${client.reviewCount ?? '—'}</div><div class="l">Reseñas</div></div>
-      <div class="modal-stat"><div class="v">${client.avgRating ? parseFloat(client.avgRating).toFixed(1) : '—'}</div><div class="l">Media</div></div>
+      <div class="modal-stat"><div class="v">${client.totalReviews ?? '—'}</div><div class="l">Reseñas</div></div>
+      <div class="modal-stat"><div class="v">${client.averageRating ? parseFloat(client.averageRating).toFixed(1) : '—'}</div><div class="l">Media</div></div>
       <div class="modal-stat"><div class="v">${(client.googleConnected || client.googleAccessToken) ? '✅' : '❌'}</div><div class="l">Google</div></div>
       <div class="modal-stat"><div class="v">${client.plan || 'starter'}</div><div class="l">Plan</div></div>
     `;
@@ -552,7 +551,7 @@
     reviewsEl.innerHTML = '<div class="loading">Cargando historial...</div>';
 
     try {
-      const res  = await fetch(API + '/api/reviews?clientId=' + clientId, { headers: { Authorization: 'Bearer ' + token } });
+      const res  = await fetch(API + '/api/admin/clients/' + clientId, { headers: { Authorization: 'Bearer ' + token } });
       const data = await res.json();
       const revs = Array.isArray(data) ? data : (data.reviews || []);
       if (!revs.length) {
@@ -587,8 +586,8 @@
       c.email || '',
       c.plan || 'starter',
       (c.googleConnected || c.googleAccessToken) ? 'Sí' : 'No',
-      c.reviewCount ?? '',
-      c.avgRating ? parseFloat(c.avgRating).toFixed(1) : '',
+      c.totalReviews ?? '',
+      c.averageRating ? parseFloat(c.averageRating).toFixed(1) : '',
       c.createdAt ? new Date(c.createdAt).toLocaleDateString('es-ES') : ''
     ].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(','));
 
@@ -646,7 +645,6 @@
   }
 
   function deleteQR(id) {
-    if (!confirm('¿Eliminar este QR?')) return;
     qrList = qrList.filter(q => q.id !== id);
     localStorage.setItem('adminQRList', JSON.stringify(qrList));
     renderQRGrid();
